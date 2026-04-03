@@ -1,0 +1,6 @@
+@SRJBackend_HostAddress = http://localhost:5159
+
+GET {{SRJBackend_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
