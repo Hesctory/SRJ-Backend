@@ -14,18 +14,20 @@ public class StudentRepository : IStudentRepository
         _context = context;
     }
 
-    public async Task<List<DStudent>> GetAllAsync()
+    public async Task<(List<DStudent> Items, int Total)> GetPagedAsync(int skip, int take)
     {
-        var students = await _context.Students
+        var query = _context.Students
             .Include(s => s.EducationalPerson)
                 .ThenInclude(ep => ep.Person)
                     .ThenInclude(p => p.Gender)
             .Include(s => s.EducationalPerson)
                 .ThenInclude(ep => ep.Person)
-                    .ThenInclude(p => p.DocumentType)
-            .ToListAsync();
+                    .ThenInclude(p => p.DocumentType);
 
-        return students.Select(MapToDomain).ToList();
+        var total = await query.CountAsync();
+        var students = await query.Skip(skip).Take(take).ToListAsync();
+
+        return (students.Select(MapToDomain).ToList(), total);
     }
 
     public async Task<DStudent?> GetByIdAsync(int id)

@@ -7,9 +7,13 @@ public partial class Student
 {
     public int EducationalPersonId { get; set; }
 
-    public string? StudentCode { get; set; }
+    public string StudentCode { get; set; } = null!;
+
+    public int BirthUbigeoId { get; set; }
 
     public bool HasDisability { get; set; }
+
+    public virtual Ubigeo BirthUbigeo { get; set; } = null!;
 
     public virtual Disability? Disability { get; set; }
 

@@ -6,7 +6,7 @@ namespace SRJBackend.Infrastructure.Controllers;
 
 [ApiController]
 [Route("api/students")]
-[Authorize]
+//[Authorize]
 public class StudentsController : ControllerBase
 {
     private readonly GetStudentsUseCase _getStudentsUseCase;
@@ -19,9 +19,12 @@ public class StudentsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll([FromQuery(Name = "_start")] int start = 0, [FromQuery(Name = "_end")] int end = 10)
     {
-        var students = await _getStudentsUseCase.ExecuteAsync();
+        var take = end - start;
+        var (students, total) = await _getStudentsUseCase.ExecuteAsync(start, take);
+        var rangeEnd = total == 0 ? 0 : start + students.Count - 1;
+        Response.Headers.Append("Content-Range", $"students {start}-{rangeEnd}/{total}");
         return Ok(students);
     }
 
