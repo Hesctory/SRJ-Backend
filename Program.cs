@@ -21,10 +21,30 @@ builder.Services.AddDbContext<SRJDbContext>(options =>
 
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IStudentRepository, StudentRepository>();
+builder.Services.AddScoped<IGenderRepository, GenderRepository>();
+builder.Services.AddScoped<IDocumentTypeRepository, DocumentTypeRepository>();
+builder.Services.AddScoped<IEthnicSelfIdentificationRepository, EthnicSelfIdentificationRepository>();
+builder.Services.AddScoped<IDepartmentRepository, DepartmentRepository>();
+builder.Services.AddScoped<IProvinceRepository, ProvinceRepository>();
+builder.Services.AddScoped<IDistrictRepository, DistrictRepository>();
+builder.Services.AddScoped<ILanguageRepository, LanguageRepository>();
+builder.Services.AddScoped<IDisabilityTypeRepository, DisabilityTypeRepository>();
+builder.Services.AddScoped<IDisabilityDegreeRepository, DisabilityDegreeRepository>();
+builder.Services.AddScoped<IRelationshipGuardianRepository, RelationshipGuardianRepository>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<LoginUseCase>();
 builder.Services.AddScoped<GetStudentsUseCase>();
 builder.Services.AddScoped<GetStudentByIdUseCase>();
+builder.Services.AddScoped<GetGendersUseCase>();
+builder.Services.AddScoped<GetDocumentTypesUseCase>();
+builder.Services.AddScoped<GetEthnicSelfIdentificationsUseCase>();
+builder.Services.AddScoped<GetDepartmentsUseCase>();
+builder.Services.AddScoped<GetProvincesUseCase>();
+builder.Services.AddScoped<GetDistrictsUseCase>();
+builder.Services.AddScoped<GetLanguagesUseCase>();
+builder.Services.AddScoped<GetDisabilityTypesUseCase>();
+builder.Services.AddScoped<GetDisabilityDegreesUseCase>();
+builder.Services.AddScoped<GetRelationshipGuardiansUseCase>();
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -50,7 +70,8 @@ builder.Services.AddCors(options =>
         {
             policy.WithOrigins("http://localhost:5173") // o el puerto de tu frontend
                   .AllowAnyHeader()
-                  .AllowAnyMethod();
+                  .AllowAnyMethod()
+                  .WithExposedHeaders("Content-Range");
         });
 });
 

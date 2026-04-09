@@ -1,5 +1,5 @@
+using SRJBackend.Application.DTOs;
 using SRJBackend.Application.Interfaces;
-using SRJBackend.Domain.Entities;
 
 namespace SRJBackend.Application.UseCases;
 
@@ -12,5 +12,17 @@ public class GetStudentsUseCase
         _studentRepository = studentRepository;
     }
 
-    public Task<List<DStudent>> ExecuteAsync() => _studentRepository.GetAllAsync();
+    public async Task<(List<StudentListDTO> Items, int Total)> ExecuteAsync(int skip, int take)
+    {
+        var (students, total) = await _studentRepository.GetPagedAsync(skip, take);
+        var items = students.Select(s => new StudentListDTO
+        {
+            id = s.Id,
+            StudentCode = s.StudentCode,
+            FullName = s.FullName,
+            Dni = s.IdDocumentNumber
+        }).ToList();
+        Console.WriteLine(items[0].id);
+        return (items, total);
+    }
 }

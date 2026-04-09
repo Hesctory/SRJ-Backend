@@ -13,5 +13,5 @@ public partial class Ubigeo
 
     public virtual ICollection<Person> People { get; set; } = new List<Person>();
 
-    public virtual ICollection<StudentHome> StudentHomes { get; set; } = new List<StudentHome>();
+    public virtual ICollection<Student> Students { get; set; } = new List<Student>();
 }

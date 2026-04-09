@@ -7,7 +7,9 @@ public partial class SecondLanguage
 {
     public int EducationalPersonId { get; set; }
 
-    public string? SecondLanguage1 { get; set; }
+    public int SecondLanguageId { get; set; }
 
     public virtual EducationalPerson EducationalPerson { get; set; } = null!;
+
+    public virtual Language SecondLanguageNavigation { get; set; } = null!;
 }

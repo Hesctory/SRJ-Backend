@@ -13,17 +13,17 @@ public partial class Person
 
     public string MaternalLastname { get; set; } = null!;
 
-    public int? GenderId { get; set; }
+    public int GenderId { get; set; }
 
     public DateOnly BirthDate { get; set; }
 
-    public int? BirthUbigeoId { get; set; }
-
-    public int? DocumentTypeId { get; set; }
+    public int DocumentTypeId { get; set; }
 
     public string IdDocumentNumber { get; set; } = null!;
 
     public string Address { get; set; } = null!;
+
+    public int AddressUbigeoId { get; set; }
 
     public string? Email { get; set; }
 
@@ -31,11 +31,11 @@ public partial class Person
 
     public string? CellPhone { get; set; }
 
-    public virtual Ubigeo? BirthUbigeo { get; set; }
+    public virtual Ubigeo AddressUbigeo { get; set; } = null!;
 
-    public virtual DocumentType? DocumentType { get; set; }
+    public virtual DocumentType DocumentType { get; set; } = null!;
 
     public virtual EducationalPerson? EducationalPerson { get; set; }
 
-    public virtual Gender? Gender { get; set; }
+    public virtual Gender Gender { get; set; } = null!;
 }

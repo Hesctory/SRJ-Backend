@@ -7,7 +7,7 @@ public partial class DisabilityDegree
 {
     public int Id { get; set; }
 
-    public string? Degree { get; set; }
+    public string Degree { get; set; } = null!;
 
     public virtual ICollection<Disability> Disabilities { get; set; } = new List<Disability>();
 }

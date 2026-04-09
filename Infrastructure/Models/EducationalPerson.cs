@@ -9,9 +9,11 @@ public partial class EducationalPerson
 
     public int? EthnicSelfIdentificationId { get; set; }
 
-    public string? NativeLanguage { get; set; }
+    public int NativeLanguageId { get; set; }
 
     public virtual EthnicSelfIdentification? EthnicSelfIdentification { get; set; }
+
+    public virtual Language NativeLanguage { get; set; } = null!;
 
     public virtual Person Person { get; set; } = null!;
 

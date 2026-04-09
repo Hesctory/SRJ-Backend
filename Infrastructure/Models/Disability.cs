@@ -9,11 +9,11 @@ public partial class Disability
 
     public bool HasDisabilityCertificate { get; set; }
 
+    public string? DisabilityCertificateNumber { get; set; }
+
     public int? DisabilityTypeId { get; set; }
 
     public int? DisabilityDegreeId { get; set; }
-
-    public virtual DisabilityCertificateNumber? DisabilityCertificateNumber { get; set; }
 
     public virtual DisabilityDegree? DisabilityDegree { get; set; }
 
