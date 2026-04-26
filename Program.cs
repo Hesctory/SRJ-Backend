@@ -20,7 +20,11 @@ builder.Services.AddDbContext<SRJDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
+builder.Services.AddScoped<IPersonRepository, PersonRepository>();
+builder.Services.AddScoped<IEducationalPersonRepository, EducationalPersonRepository>();
 builder.Services.AddScoped<IStudentRepository, StudentRepository>();
+builder.Services.AddScoped<IStudentHomeRepository, StudentHomeRepository>();
+builder.Services.AddScoped<IFamiliarStudentRelationshipRepository, FamiliarStudentRelationshipRepository>();
 builder.Services.AddScoped<IGenderRepository, GenderRepository>();
 builder.Services.AddScoped<IDocumentTypeRepository, DocumentTypeRepository>();
 builder.Services.AddScoped<IEthnicSelfIdentificationRepository, EthnicSelfIdentificationRepository>();
@@ -30,9 +34,17 @@ builder.Services.AddScoped<IDistrictRepository, DistrictRepository>();
 builder.Services.AddScoped<ILanguageRepository, LanguageRepository>();
 builder.Services.AddScoped<IDisabilityTypeRepository, DisabilityTypeRepository>();
 builder.Services.AddScoped<IDisabilityDegreeRepository, DisabilityDegreeRepository>();
-builder.Services.AddScoped<IRelationshipGuardianRepository, RelationshipGuardianRepository>();
+builder.Services.AddScoped<IFamiliarRelationshipTypeRepository, FamiliarRelationshipTypeRepository>();
+builder.Services.AddScoped<IFamiliarRepository, FamiliarRepository>();
+builder.Services.AddScoped<IChildbirthTypeRepository, ChildbirthTypeRepository>();
+builder.Services.AddScoped<ICivilStateRepository, CivilStateRepository>();
+builder.Services.AddScoped<ILevelOfEducationRepository, LevelOfEducationRepository>();
+builder.Services.AddScoped<IReligionRepository, ReligionRepository>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<LoginUseCase>();
+builder.Services.AddScoped<CreateStudentUseCase>();
+builder.Services.AddScoped<UpdateStudentUseCase>();
+builder.Services.AddScoped<DeleteStudentUseCase>();
 builder.Services.AddScoped<GetStudentsUseCase>();
 builder.Services.AddScoped<GetStudentByIdUseCase>();
 builder.Services.AddScoped<GetGendersUseCase>();
@@ -44,7 +56,11 @@ builder.Services.AddScoped<GetDistrictsUseCase>();
 builder.Services.AddScoped<GetLanguagesUseCase>();
 builder.Services.AddScoped<GetDisabilityTypesUseCase>();
 builder.Services.AddScoped<GetDisabilityDegreesUseCase>();
-builder.Services.AddScoped<GetRelationshipGuardiansUseCase>();
+builder.Services.AddScoped<GetFamiliarRelationshipTypesUseCase>();
+builder.Services.AddScoped<GetChildbirthTypesUseCase>();
+builder.Services.AddScoped<GetCivilStatesUseCase>();
+builder.Services.AddScoped<GetLevelOfEducationsUseCase>();
+builder.Services.AddScoped<GetReligionsUseCase>();
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

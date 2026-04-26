@@ -18,11 +18,10 @@ public class GetStudentsUseCase
         var items = students.Select(s => new StudentListDTO
         {
             id = s.Id,
-            StudentCode = s.StudentCode,
             FullName = s.FullName,
             Dni = s.IdDocumentNumber
         }).ToList();
-        Console.WriteLine(items[0].id);
+        //Console.WriteLine(items[0].id);
         return (items, total);
     }
 }

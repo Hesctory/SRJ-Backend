@@ -11,5 +11,5 @@ public partial class Language
 
     public virtual ICollection<EducationalPerson> EducationalPeople { get; set; } = new List<EducationalPerson>();
 
-    public virtual ICollection<SecondLanguage> SecondLanguages { get; set; } = new List<SecondLanguage>();
+    public virtual ICollection<EducationalPerson> EducationalPeopleNavigation { get; set; } = new List<EducationalPerson>();
 }
