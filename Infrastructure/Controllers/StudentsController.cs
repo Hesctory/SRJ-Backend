@@ -1,5 +1,7 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SRJBackend.Application.DTOs;
 using SRJBackend.Application.UseCases;
 
 namespace SRJBackend.Infrastructure.Controllers;
@@ -11,11 +13,22 @@ public class StudentsController : ControllerBase
 {
     private readonly GetStudentsUseCase _getStudentsUseCase;
     private readonly GetStudentByIdUseCase _getStudentByIdUseCase;
+    private readonly CreateStudentUseCase _createStudentUseCase;
+    private readonly UpdateStudentUseCase _updateStudentUseCase;
+    private readonly DeleteStudentUseCase _deleteStudentUseCase;
 
-    public StudentsController(GetStudentsUseCase getStudentsUseCase, GetStudentByIdUseCase getStudentByIdUseCase)
+    public StudentsController(
+        GetStudentsUseCase getStudentsUseCase,
+        GetStudentByIdUseCase getStudentByIdUseCase,
+        CreateStudentUseCase createStudentUseCase,
+        UpdateStudentUseCase updateStudentUseCase,
+        DeleteStudentUseCase deleteStudentUseCase)
     {
         _getStudentsUseCase = getStudentsUseCase;
         _getStudentByIdUseCase = getStudentByIdUseCase;
+        _createStudentUseCase = createStudentUseCase;
+        _updateStudentUseCase = updateStudentUseCase;
+        _deleteStudentUseCase = deleteStudentUseCase;
     }
 
     [HttpGet]
@@ -33,6 +46,45 @@ public class StudentsController : ControllerBase
     {
         var student = await _getStudentByIdUseCase.ExecuteAsync(id);
         if (student == null) return NotFound();
+        Console.WriteLine(JsonSerializer.Serialize(student, new JsonSerializerOptions { WriteIndented = true }));
         return Ok(student);
+    }
+
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> Update(int id, [FromBody] CreateStudentDTO dto)
+    {
+        Console.WriteLine($"=== PUT /api/students/{id} ===");
+        Console.WriteLine(JsonSerializer.Serialize(dto, new JsonSerializerOptions { WriteIndented = true }));
+        try
+        {
+            await _updateStudentUseCase.ExecuteAsync(id, dto);
+            return NoContent();
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+    }
+
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var deleted = await _deleteStudentUseCase.ExecuteAsync(id);
+        if (!deleted) return NotFound();
+        return NoContent();
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] CreateStudentDTO dto)
+    {
+        try
+        {
+            var id = await _createStudentUseCase.ExecuteAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id }, new { id });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { message = ex.Message });
+        }
     }
 }

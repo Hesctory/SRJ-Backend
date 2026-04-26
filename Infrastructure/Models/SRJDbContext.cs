@@ -17,6 +17,10 @@ public partial class SRJDbContext : DbContext
 
     public virtual DbSet<AuditLog> AuditLogs { get; set; }
 
+    public virtual DbSet<ChildbirthType> ChildbirthTypes { get; set; }
+
+    public virtual DbSet<CivilState> CivilStates { get; set; }
+
     public virtual DbSet<Department> Departments { get; set; }
 
     public virtual DbSet<Disability> Disabilities { get; set; }
@@ -33,9 +37,17 @@ public partial class SRJDbContext : DbContext
 
     public virtual DbSet<EthnicSelfIdentification> EthnicSelfIdentifications { get; set; }
 
+    public virtual DbSet<Familiar> Familiars { get; set; }
+
+    public virtual DbSet<FamiliarRelationshipType> FamiliarRelationshipTypes { get; set; }
+
+    public virtual DbSet<FamiliarStudentRelationship> FamiliarStudentRelationships { get; set; }
+
     public virtual DbSet<Gender> Genders { get; set; }
 
     public virtual DbSet<Language> Languages { get; set; }
+
+    public virtual DbSet<LevelOfEducation> LevelOfEducations { get; set; }
 
     public virtual DbSet<Permission> Permissions { get; set; }
 
@@ -43,11 +55,9 @@ public partial class SRJDbContext : DbContext
 
     public virtual DbSet<Province> Provinces { get; set; }
 
-    public virtual DbSet<RelationshipGuardian> RelationshipGuardians { get; set; }
+    public virtual DbSet<Religion> Religions { get; set; }
 
     public virtual DbSet<Role> Roles { get; set; }
-
-    public virtual DbSet<SecondLanguage> SecondLanguages { get; set; }
 
     public virtual DbSet<Student> Students { get; set; }
 
@@ -79,6 +89,32 @@ public partial class SRJDbContext : DbContext
             entity.Property(e => e.EventType)
                 .HasMaxLength(200)
                 .HasColumnName("event_type");
+        });
+
+        modelBuilder.Entity<ChildbirthType>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("childbirth_type_pkey");
+
+            entity.ToTable("childbirth_type");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Name)
+                .HasMaxLength(50)
+                .HasColumnName("name");
+        });
+
+        modelBuilder.Entity<CivilState>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("civil_state_pkey");
+
+            entity.ToTable("civil_state");
+
+            entity.HasIndex(e => e.Name, "civil_state_name_key").IsUnique();
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Name)
+                .HasMaxLength(40)
+                .HasColumnName("name");
         });
 
         modelBuilder.Entity<Department>(entity =>
@@ -220,6 +256,25 @@ public partial class SRJDbContext : DbContext
                 .HasForeignKey<EducationalPerson>(d => d.PersonId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("educational_person_person_id_fkey");
+
+            entity.HasMany(d => d.SecondLanguages).WithMany(p => p.EducationalPeopleNavigation)
+                .UsingEntity<Dictionary<string, object>>(
+                    "SecondLanguage",
+                    r => r.HasOne<Language>().WithMany()
+                        .HasForeignKey("SecondLanguageId")
+                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .HasConstraintName("second_languages_second_language_id_fkey"),
+                    l => l.HasOne<EducationalPerson>().WithMany()
+                        .HasForeignKey("EducationalPersonId")
+                        .OnDelete(DeleteBehavior.ClientSetNull)
+                        .HasConstraintName("second_languages_educational_person_id_fkey"),
+                    j =>
+                    {
+                        j.HasKey("EducationalPersonId", "SecondLanguageId").HasName("second_languages_pkey");
+                        j.ToTable("second_languages");
+                        j.IndexerProperty<int>("EducationalPersonId").HasColumnName("educational_person_id");
+                        j.IndexerProperty<int>("SecondLanguageId").HasColumnName("second_language_id");
+                    });
         });
 
         modelBuilder.Entity<EthnicSelfIdentification>(entity =>
@@ -232,6 +287,75 @@ public partial class SRJDbContext : DbContext
             entity.Property(e => e.EthnicSelfIdentification1)
                 .HasMaxLength(100)
                 .HasColumnName("ethnic_self_identification");
+        });
+
+        modelBuilder.Entity<Familiar>(entity =>
+        {
+            entity.HasKey(e => e.EducationalPersonId).HasName("familiars_pkey");
+
+            entity.ToTable("familiars");
+
+            entity.Property(e => e.EducationalPersonId)
+                .ValueGeneratedNever()
+                .HasColumnName("educational_person_id");
+            entity.Property(e => e.LevelOfEducationId).HasColumnName("level_of_education_id");
+            entity.Property(e => e.Lives).HasColumnName("lives");
+            entity.Property(e => e.Occupation)
+                .HasMaxLength(70)
+                .HasColumnName("occupation");
+            entity.Property(e => e.Workplace)
+                .HasMaxLength(100)
+                .HasColumnName("workplace");
+
+            entity.HasOne(d => d.EducationalPerson).WithOne(p => p.Familiar)
+                .HasForeignKey<Familiar>(d => d.EducationalPersonId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("familiars_educational_person_id_fkey");
+
+            entity.HasOne(d => d.LevelOfEducation).WithMany(p => p.Familiars)
+                .HasForeignKey(d => d.LevelOfEducationId)
+                .HasConstraintName("familiars_level_of_education_id_fkey");
+        });
+
+        modelBuilder.Entity<FamiliarRelationshipType>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("familiar_relationship_type_pkey");
+
+            entity.ToTable("familiar_relationship_type");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Name)
+                .HasMaxLength(100)
+                .HasColumnName("name");
+        });
+
+        modelBuilder.Entity<FamiliarStudentRelationship>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("familiar_student_relationship_pkey");
+
+            entity.ToTable("familiar_student_relationship");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.FamiliarId).HasColumnName("familiar_id");
+            entity.Property(e => e.FamiliarRelationshipTypeId).HasColumnName("familiar_relationship_type_id");
+            entity.Property(e => e.Isguardian).HasColumnName("isguardian");
+            entity.Property(e => e.LivesTogether).HasColumnName("lives_together");
+            entity.Property(e => e.StudentId).HasColumnName("student_id");
+
+            entity.HasOne(d => d.Familiar).WithMany(p => p.FamiliarStudentRelationships)
+                .HasForeignKey(d => d.FamiliarId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("familiar_student_relationship_familiar_id_fkey");
+
+            entity.HasOne(d => d.FamiliarRelationshipType).WithMany(p => p.FamiliarStudentRelationships)
+                .HasForeignKey(d => d.FamiliarRelationshipTypeId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("familiar_student_relationship_familiar_relationship_type_i_fkey");
+
+            entity.HasOne(d => d.Student).WithMany(p => p.FamiliarStudentRelationships)
+                .HasForeignKey(d => d.StudentId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("familiar_student_relationship_student_id_fkey");
         });
 
         modelBuilder.Entity<Gender>(entity =>
@@ -262,6 +386,20 @@ public partial class SRJDbContext : DbContext
                 .HasColumnName("name");
         });
 
+        modelBuilder.Entity<LevelOfEducation>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("level_of_education_pkey");
+
+            entity.ToTable("level_of_education");
+
+            entity.HasIndex(e => e.Name, "level_of_education_name_key").IsUnique();
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Name)
+                .HasMaxLength(40)
+                .HasColumnName("name");
+        });
+
         modelBuilder.Entity<Permission>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("permissions_pkey");
@@ -280,6 +418,8 @@ public partial class SRJDbContext : DbContext
 
             entity.ToTable("person");
 
+            entity.HasIndex(e => e.IdDocumentNumber, "unique_id_document_number").IsUnique();
+
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Address).HasColumnName("address");
             entity.Property(e => e.AddressUbigeoId).HasColumnName("address_ubigeo_id");
@@ -287,6 +427,7 @@ public partial class SRJDbContext : DbContext
             entity.Property(e => e.CellPhone)
                 .HasMaxLength(20)
                 .HasColumnName("cell_phone");
+            entity.Property(e => e.CivilStateId).HasColumnName("civil_state_id");
             entity.Property(e => e.DocumentTypeId).HasColumnName("document_type_id");
             entity.Property(e => e.Email)
                 .HasMaxLength(100)
@@ -307,11 +448,16 @@ public partial class SRJDbContext : DbContext
             entity.Property(e => e.PaternalLastname)
                 .HasMaxLength(40)
                 .HasColumnName("paternal_lastname");
+            entity.Property(e => e.ReligionId).HasColumnName("religion_id");
 
             entity.HasOne(d => d.AddressUbigeo).WithMany(p => p.People)
                 .HasForeignKey(d => d.AddressUbigeoId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("person_address_ubigeo_id_fkey");
+
+            entity.HasOne(d => d.CivilState).WithMany(p => p.People)
+                .HasForeignKey(d => d.CivilStateId)
+                .HasConstraintName("person_civil_state_id_fkey");
 
             entity.HasOne(d => d.DocumentType).WithMany(p => p.People)
                 .HasForeignKey(d => d.DocumentTypeId)
@@ -322,6 +468,10 @@ public partial class SRJDbContext : DbContext
                 .HasForeignKey(d => d.GenderId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("person_gender_id_fkey");
+
+            entity.HasOne(d => d.Religion).WithMany(p => p.People)
+                .HasForeignKey(d => d.ReligionId)
+                .HasConstraintName("person_religion_id_fkey");
         });
 
         modelBuilder.Entity<Province>(entity =>
@@ -350,17 +500,17 @@ public partial class SRJDbContext : DbContext
                 .HasConstraintName("province_department_id_fkey");
         });
 
-        modelBuilder.Entity<RelationshipGuardian>(entity =>
+        modelBuilder.Entity<Religion>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("relationship_guardian_pkey");
+            entity.HasKey(e => e.Id).HasName("religion_pkey");
 
-            entity.ToTable("relationship_guardian");
+            entity.ToTable("religion");
 
-            entity.HasIndex(e => e.Name, "relationship_guardian_name_key").IsUnique();
+            entity.HasIndex(e => e.Name, "religion_name_key").IsUnique();
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Name)
-                .HasMaxLength(100)
+                .HasMaxLength(40)
                 .HasColumnName("name");
         });
 
@@ -395,28 +545,6 @@ public partial class SRJDbContext : DbContext
                     });
         });
 
-        modelBuilder.Entity<SecondLanguage>(entity =>
-        {
-            entity.HasKey(e => e.EducationalPersonId).HasName("second_languages_pkey");
-
-            entity.ToTable("second_languages");
-
-            entity.Property(e => e.EducationalPersonId)
-                .ValueGeneratedNever()
-                .HasColumnName("educational_person_id");
-            entity.Property(e => e.SecondLanguageId).HasColumnName("second_language_id");
-
-            entity.HasOne(d => d.EducationalPerson).WithOne(p => p.SecondLanguage)
-                .HasForeignKey<SecondLanguage>(d => d.EducationalPersonId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("second_languages_educational_person_id_fkey");
-
-            entity.HasOne(d => d.SecondLanguageNavigation).WithMany(p => p.SecondLanguages)
-                .HasForeignKey(d => d.SecondLanguageId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("second_languages_second_language_id_fkey");
-        });
-
         modelBuilder.Entity<Student>(entity =>
         {
             entity.HasKey(e => e.EducationalPersonId).HasName("students_pkey");
@@ -427,15 +555,18 @@ public partial class SRJDbContext : DbContext
                 .ValueGeneratedNever()
                 .HasColumnName("educational_person_id");
             entity.Property(e => e.BirthUbigeoId).HasColumnName("birth_ubigeo_id");
+            entity.Property(e => e.ChildbirthTypeId).HasColumnName("childbirth_type_id");
             entity.Property(e => e.HasDisability).HasColumnName("has_disability");
-            entity.Property(e => e.StudentCode)
-                .HasMaxLength(20)
-                .HasColumnName("student_code");
+            entity.Property(e => e.Siblings).HasColumnName("siblings");
 
             entity.HasOne(d => d.BirthUbigeo).WithMany(p => p.Students)
                 .HasForeignKey(d => d.BirthUbigeoId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("students_birth_ubigeo_id_fkey");
+
+            entity.HasOne(d => d.ChildbirthType).WithMany(p => p.Students)
+                .HasForeignKey(d => d.ChildbirthTypeId)
+                .HasConstraintName("students_childbirth_type_id_fkey");
 
             entity.HasOne(d => d.EducationalPerson).WithOne(p => p.Student)
                 .HasForeignKey<Student>(d => d.EducationalPersonId)

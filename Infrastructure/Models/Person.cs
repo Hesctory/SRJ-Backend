@@ -31,11 +31,19 @@ public partial class Person
 
     public string? CellPhone { get; set; }
 
+    public int? CivilStateId { get; set; }
+
+    public int? ReligionId { get; set; }
+
     public virtual Ubigeo AddressUbigeo { get; set; } = null!;
+
+    public virtual CivilState? CivilState { get; set; }
 
     public virtual DocumentType DocumentType { get; set; } = null!;
 
     public virtual EducationalPerson? EducationalPerson { get; set; }
 
     public virtual Gender Gender { get; set; } = null!;
+
+    public virtual Religion? Religion { get; set; }
 }
