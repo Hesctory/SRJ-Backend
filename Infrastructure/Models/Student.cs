@@ -23,6 +23,8 @@ public partial class Student
 
     public virtual EducationalPerson EducationalPerson { get; set; } = null!;
 
+    public virtual ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
+
     public virtual ICollection<FamiliarStudentRelationship> FamiliarStudentRelationships { get; set; } = new List<FamiliarStudentRelationship>();
 
     public virtual StudentHome? StudentHome { get; set; }

@@ -21,5 +21,5 @@ public class LevelOfEducationsController : ControllerBase
         var total = levelOfEducations.Count;
         Response.Headers.Append("Content-Range", $"level-of-educations 0-{(total == 0 ? 0 : total - 1)}/{total}");
         return Ok(levelOfEducations);
-    }
+    }   
 }

@@ -35,6 +35,8 @@ public partial class SRJDbContext : DbContext
 
     public virtual DbSet<EducationalPerson> EducationalPeople { get; set; }
 
+    public virtual DbSet<Enrollment> Enrollments { get; set; }
+
     public virtual DbSet<EthnicSelfIdentification> EthnicSelfIdentifications { get; set; }
 
     public virtual DbSet<Familiar> Familiars { get; set; }
@@ -45,9 +47,25 @@ public partial class SRJDbContext : DbContext
 
     public virtual DbSet<Gender> Genders { get; set; }
 
+    public virtual DbSet<Grade> Grades { get; set; }
+
+    public virtual DbSet<GradeOffering> GradeOfferings { get; set; }
+
+    public virtual DbSet<GradeOfferingShift> GradeOfferingShifts { get; set; }
+
+    public virtual DbSet<GradeOfferingShiftSection> GradeOfferingShiftSections { get; set; }
+
+    public virtual DbSet<Institution> Institutions { get; set; }
+
+    public virtual DbSet<InstitutionLevel> InstitutionLevels { get; set; }
+
     public virtual DbSet<Language> Languages { get; set; }
 
+    public virtual DbSet<Level> Levels { get; set; }
+
     public virtual DbSet<LevelOfEducation> LevelOfEducations { get; set; }
+
+    public virtual DbSet<PaymentMethod> PaymentMethods { get; set; }
 
     public virtual DbSet<Permission> Permissions { get; set; }
 
@@ -58,6 +76,16 @@ public partial class SRJDbContext : DbContext
     public virtual DbSet<Religion> Religions { get; set; }
 
     public virtual DbSet<Role> Roles { get; set; }
+
+    public virtual DbSet<RucState> RucStates { get; set; }
+
+    public virtual DbSet<SchoolFee> SchoolFees { get; set; }
+
+    public virtual DbSet<SchoolFeeConcept> SchoolFeeConcepts { get; set; }
+
+    public virtual DbSet<SchoolYear> SchoolYears { get; set; }
+
+    public virtual DbSet<Shift> Shifts { get; set; }
 
     public virtual DbSet<Student> Students { get; set; }
 
@@ -277,6 +305,37 @@ public partial class SRJDbContext : DbContext
                     });
         });
 
+        modelBuilder.Entity<Enrollment>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("enrollment_pkey");
+
+            entity.ToTable("enrollment");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Code)
+                .HasMaxLength(6)
+                .IsFixedLength()
+                .HasColumnName("code");
+            entity.Property(e => e.CodeNumber).HasColumnName("code_number");
+            entity.Property(e => e.GradeOfferingShiftSectionId).HasColumnName("grade_offering_shift_section_id");
+            entity.Property(e => e.SchoolFeeConceptId).HasColumnName("school_fee_concept_id");
+            entity.Property(e => e.StudentId).HasColumnName("student_id");
+
+            entity.HasOne(d => d.GradeOfferingShiftSection).WithMany(p => p.Enrollments)
+                .HasForeignKey(d => d.GradeOfferingShiftSectionId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("enrollment_grade_offering_shift_section_id_fkey");
+
+            entity.HasOne(d => d.SchoolFeeConcept).WithMany(p => p.Enrollments)
+                .HasForeignKey(d => d.SchoolFeeConceptId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("enrollment_school_fee_concept_id_fkey");
+
+            entity.HasOne(d => d.Student).WithMany(p => p.Enrollments)
+                .HasForeignKey(d => d.StudentId)
+                .HasConstraintName("enrollment_student_id_fkey");
+        });
+
         modelBuilder.Entity<EthnicSelfIdentification>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("ethnic_self_identifications_pkey");
@@ -372,6 +431,137 @@ public partial class SRJDbContext : DbContext
                 .HasColumnName("name");
         });
 
+        modelBuilder.Entity<Grade>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("academic_grades_pkey");
+
+            entity.ToTable("grades");
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("nextval('academic_grades_id_seq'::regclass)")
+                .HasColumnName("id");
+            entity.Property(e => e.LevelId).HasColumnName("level_id");
+            entity.Property(e => e.Name)
+                .HasMaxLength(50)
+                .HasColumnName("name");
+            entity.Property(e => e.Year).HasColumnName("year");
+
+            entity.HasOne(d => d.Level).WithMany(p => p.Grades)
+                .HasForeignKey(d => d.LevelId)
+                .HasConstraintName("academic_grades_level_id_fkey");
+        });
+
+        modelBuilder.Entity<GradeOffering>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("grade_offerings_pkey");
+
+            entity.ToTable("grade_offerings");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.GradeId).HasColumnName("grade_id");
+            entity.Property(e => e.SchoolYearId).HasColumnName("school_year_id");
+
+            entity.HasOne(d => d.Grade).WithMany(p => p.GradeOfferings)
+                .HasForeignKey(d => d.GradeId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("grade_offerings_grade_id_fkey");
+
+            entity.HasOne(d => d.SchoolYear).WithMany(p => p.GradeOfferings)
+                .HasForeignKey(d => d.SchoolYearId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("grade_offerings_school_year_id_fkey");
+        });
+
+        modelBuilder.Entity<GradeOfferingShift>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("grade_offering_shifts_pkey");
+
+            entity.ToTable("grade_offering_shifts");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.GradeOfferingId).HasColumnName("grade_offering_id");
+            entity.Property(e => e.Sections).HasColumnName("sections");
+            entity.Property(e => e.ShiftId).HasColumnName("shift_id");
+
+            entity.HasOne(d => d.GradeOffering).WithMany(p => p.GradeOfferingShifts)
+                .HasForeignKey(d => d.GradeOfferingId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("grade_offering_shifts_grade_offering_id_fkey");
+
+            entity.HasOne(d => d.Shift).WithMany(p => p.GradeOfferingShifts)
+                .HasForeignKey(d => d.ShiftId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("grade_offering_shifts_shift_id_fkey");
+        });
+
+        modelBuilder.Entity<GradeOfferingShiftSection>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("grade_offering_shift_sections_pkey");
+
+            entity.ToTable("grade_offering_shift_sections");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.GradeOfferingShiftId).HasColumnName("grade_offering_shift_id");
+            entity.Property(e => e.Section)
+                .HasMaxLength(1)
+                .HasColumnName("section");
+            entity.Property(e => e.SectionNumber).HasColumnName("section_number");
+
+            entity.HasOne(d => d.GradeOfferingShift).WithMany(p => p.GradeOfferingShiftSections)
+                .HasForeignKey(d => d.GradeOfferingShiftId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("grade_offering_shift_sections_grade_offering_shift_id_fkey");
+        });
+
+        modelBuilder.Entity<Institution>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("institution_pkey");
+
+            entity.ToTable("institution");
+
+            entity.HasIndex(e => e.Name, "institution_name_key").IsUnique();
+
+            entity.HasIndex(e => e.Ruc, "institution_ruc_key").IsUnique();
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Name)
+                .HasMaxLength(70)
+                .HasColumnName("name");
+            entity.Property(e => e.Ruc)
+                .HasMaxLength(11)
+                .IsFixedLength()
+                .HasColumnName("ruc");
+            entity.Property(e => e.RucStateId).HasColumnName("ruc_state_id");
+
+            entity.HasOne(d => d.RucState).WithMany(p => p.Institutions)
+                .HasForeignKey(d => d.RucStateId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("institution_ruc_state_id_fkey");
+        });
+
+        modelBuilder.Entity<InstitutionLevel>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToTable("institution_levels");
+
+            entity.Property(e => e.EndDate).HasColumnName("end_date");
+            entity.Property(e => e.InstitutionId).HasColumnName("institution_id");
+            entity.Property(e => e.IsActive).HasColumnName("is_active");
+            entity.Property(e => e.LevelId).HasColumnName("level_id");
+            entity.Property(e => e.StartDate).HasColumnName("start_date");
+
+            entity.HasOne(d => d.Institution).WithMany()
+                .HasForeignKey(d => d.InstitutionId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("institution_levels_institution_id_fkey");
+
+            entity.HasOne(d => d.Level).WithMany()
+                .HasForeignKey(d => d.LevelId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("institution_levels_level_id_fkey");
+        });
+
         modelBuilder.Entity<Language>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("languages_pkey");
@@ -386,6 +576,21 @@ public partial class SRJDbContext : DbContext
                 .HasColumnName("name");
         });
 
+        modelBuilder.Entity<Level>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("academic_levels_pkey");
+
+            entity.ToTable("levels");
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("nextval('academic_levels_id_seq'::regclass)")
+                .HasColumnName("id");
+            entity.Property(e => e.Name)
+                .HasMaxLength(50)
+                .HasColumnName("name");
+            entity.Property(e => e.OrderIndex).HasColumnName("order_index");
+        });
+
         modelBuilder.Entity<LevelOfEducation>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("level_of_education_pkey");
@@ -397,6 +602,20 @@ public partial class SRJDbContext : DbContext
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Name)
                 .HasMaxLength(40)
+                .HasColumnName("name");
+        });
+
+        modelBuilder.Entity<PaymentMethod>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("payment_methods_pkey");
+
+            entity.ToTable("payment_methods");
+
+            entity.HasIndex(e => e.Name, "payment_methods_name_key").IsUnique();
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Name)
+                .HasMaxLength(50)
                 .HasColumnName("name");
         });
 
@@ -543,6 +762,106 @@ public partial class SRJDbContext : DbContext
                         j.IndexerProperty<int>("RoleId").HasColumnName("role_id");
                         j.IndexerProperty<int>("PermissionId").HasColumnName("permission_id");
                     });
+        });
+
+        modelBuilder.Entity<RucState>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("ruc_states_pkey");
+
+            entity.ToTable("ruc_states");
+
+            entity.HasIndex(e => e.Name, "ruc_states_name_key").IsUnique();
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Name)
+                .HasMaxLength(50)
+                .HasColumnName("name");
+        });
+
+        modelBuilder.Entity<SchoolFee>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("school_fee_pkey");
+
+            entity.ToTable("school_fee");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Description).HasColumnName("description");
+            entity.Property(e => e.EnrollmentPrice)
+                .HasPrecision(5, 2)
+                .HasColumnName("enrollment_price");
+            entity.Property(e => e.LevelId).HasColumnName("level_id");
+            entity.Property(e => e.RegistrationFee)
+                .HasPrecision(5, 2)
+                .HasColumnName("registration_fee");
+            entity.Property(e => e.SchoolFeeConceptId).HasColumnName("school_fee_concept_id");
+            entity.Property(e => e.SchoolYearId).HasColumnName("school_year_id");
+            entity.Property(e => e.ShiftId).HasColumnName("shift_id");
+            entity.Property(e => e.TuitionCost)
+                .HasPrecision(5, 2)
+                .HasColumnName("tuition_cost");
+
+            entity.HasOne(d => d.Level).WithMany(p => p.SchoolFees)
+                .HasForeignKey(d => d.LevelId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("school_fee_level_id_fkey");
+
+            entity.HasOne(d => d.SchoolFeeConcept).WithMany(p => p.SchoolFees)
+                .HasForeignKey(d => d.SchoolFeeConceptId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("school_fee_school_fee_concept_id_fkey");
+
+            entity.HasOne(d => d.SchoolYear).WithMany(p => p.SchoolFees)
+                .HasForeignKey(d => d.SchoolYearId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("school_fee_school_year_id_fkey");
+
+            entity.HasOne(d => d.Shift).WithMany(p => p.SchoolFees)
+                .HasForeignKey(d => d.ShiftId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("school_fee_shift_id_fkey");
+        });
+
+        modelBuilder.Entity<SchoolFeeConcept>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("school_fee_concepts_pkey");
+
+            entity.ToTable("school_fee_concepts");
+
+            entity.HasIndex(e => e.Name, "school_fee_concepts_name_key").IsUnique();
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Name)
+                .HasMaxLength(40)
+                .HasColumnName("name");
+        });
+
+        modelBuilder.Entity<SchoolYear>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("school_year_pkey");
+
+            entity.ToTable("school_year");
+
+            entity.HasIndex(e => e.Year, "school_year_year_key").IsUnique();
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.EndDate).HasColumnName("end_date");
+            entity.Property(e => e.IsActive).HasColumnName("is_active");
+            entity.Property(e => e.StartDate).HasColumnName("start_date");
+            entity.Property(e => e.Year).HasColumnName("year");
+        });
+
+        modelBuilder.Entity<Shift>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("shifts_pkey");
+
+            entity.ToTable("shifts");
+
+            entity.HasIndex(e => e.Name, "shifts_name_key").IsUnique();
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Name)
+                .HasMaxLength(6)
+                .HasColumnName("name");
         });
 
         modelBuilder.Entity<Student>(entity =>
