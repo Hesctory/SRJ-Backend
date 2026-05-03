@@ -1,10 +1,12 @@
 using System.Text;
 using Isopoh.Cryptography.Argon2;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using SRJBackend.Application.Interfaces;
 using SRJBackend.Application.UseCases;
+using SRJBackend.Infrastructure.Authorization;
 using SRJBackend.Infrastructure.Models;
 using SRJBackend.Infrastructure.Repositories;
 using SRJBackend.Infrastructure.Services;
@@ -40,6 +42,14 @@ builder.Services.AddScoped<IChildbirthTypeRepository, ChildbirthTypeRepository>(
 builder.Services.AddScoped<ICivilStateRepository, CivilStateRepository>();
 builder.Services.AddScoped<ILevelOfEducationRepository, LevelOfEducationRepository>();
 builder.Services.AddScoped<IReligionRepository, ReligionRepository>();
+builder.Services.AddScoped<IRucStateRepository, RucStateRepository>();
+builder.Services.AddScoped<IInstitutionRepository, InstitutionRepository>();
+builder.Services.AddScoped<ISchoolYearRepository, SchoolYearRepository>();
+builder.Services.AddScoped<IGradeRepository, GradeRepository>();
+builder.Services.AddScoped<ILevelRepository, LevelRepository>();
+builder.Services.AddScoped<IShiftRepository, ShiftRepository>();
+builder.Services.AddScoped<IGradeOfferingRepository, GradeOfferingRepository>();
+builder.Services.AddScoped<IGradeOfferingShiftSectionRepository, GradeOfferingShiftSectionRepository>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<LoginUseCase>();
 builder.Services.AddScoped<CreateStudentUseCase>();
@@ -61,6 +71,39 @@ builder.Services.AddScoped<GetChildbirthTypesUseCase>();
 builder.Services.AddScoped<GetCivilStatesUseCase>();
 builder.Services.AddScoped<GetLevelOfEducationsUseCase>();
 builder.Services.AddScoped<GetReligionsUseCase>();
+builder.Services.AddScoped<GetRucStatesUseCase>();
+builder.Services.AddScoped<GetInstitutionsUseCase>();
+builder.Services.AddScoped<GetInstitutionByIdUseCase>();
+builder.Services.AddScoped<CreateInstitutionUseCase>();
+builder.Services.AddScoped<UpdateInstitutionUseCase>();
+builder.Services.AddScoped<DeleteInstitutionUseCase>();
+builder.Services.AddScoped<GetSchoolYearsUseCase>();
+builder.Services.AddScoped<GetSchoolYearByIdUseCase>();
+builder.Services.AddScoped<CreateSchoolYearUseCase>();
+builder.Services.AddScoped<UpdateSchoolYearUseCase>();
+builder.Services.AddScoped<DeleteSchoolYearUseCase>();
+builder.Services.AddScoped<GetGradesUseCase>();
+builder.Services.AddScoped<GetGradeByIdUseCase>();
+builder.Services.AddScoped<CreateGradeUseCase>();
+builder.Services.AddScoped<UpdateGradeUseCase>();
+builder.Services.AddScoped<DeleteGradeUseCase>();
+builder.Services.AddScoped<GetLevelsUseCase>();
+builder.Services.AddScoped<GetLevelByIdUseCase>();
+builder.Services.AddScoped<CreateLevelUseCase>();
+builder.Services.AddScoped<UpdateLevelUseCase>();
+builder.Services.AddScoped<DeleteLevelUseCase>();
+builder.Services.AddScoped<GetShiftsUseCase>();
+builder.Services.AddScoped<GetShiftByIdUseCase>();
+builder.Services.AddScoped<GetGradeOfferingsUseCase>();
+builder.Services.AddScoped<GetGradeOfferingByIdUseCase>();
+builder.Services.AddScoped<CreateGradeOfferingUseCase>();
+builder.Services.AddScoped<UpdateGradeOfferingUseCase>();
+builder.Services.AddScoped<DeleteGradeOfferingUseCase>();
+
+builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
+builder.Services.AddSingleton<IAuthorizationMiddlewareResultHandler, CustomAuthorizationMiddlewareResultHandler>();
+
+builder.Services.AddAppAuthorization();
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

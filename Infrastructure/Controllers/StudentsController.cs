@@ -8,7 +8,6 @@ namespace SRJBackend.Infrastructure.Controllers;
 
 [ApiController]
 [Route("api/students")]
-//[Authorize]
 public class StudentsController : ControllerBase
 {
     private readonly GetStudentsUseCase _getStudentsUseCase;
@@ -32,16 +31,33 @@ public class StudentsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll([FromQuery(Name = "_start")] int start = 0, [FromQuery(Name = "_end")] int end = 10)
+    [Authorize(Policy = "student.read")]
+    public async Task<IActionResult> GetAll([FromQuery] string? range = null)
     {
-        var take = end - start;
-        var (students, total) = await _getStudentsUseCase.ExecuteAsync(start, take);
-        var rangeEnd = total == 0 ? 0 : start + students.Count - 1;
-        Response.Headers.Append("Content-Range", $"students {start}-{rangeEnd}/{total}");
-        return Ok(students);
+        if (range != null)
+        {
+            var bounds = JsonSerializer.Deserialize<int[]>(range)!;
+            if (bounds == null || bounds.Length != 2)
+                return BadRequest("Invalid range");
+            var start = bounds[0];
+            var end = bounds[1];
+            var take = end - start + 1;
+
+            var (students, total) = await _getStudentsUseCase.ExecuteAsync(start, take);
+            var rangeEnd = total == 0 ? 0 : start + students.Count - 1;
+            Response.Headers.Append("Content-Range", $"students {start}-{rangeEnd}/{total}");
+            return Ok(students);
+        }
+        else
+        {
+            var (students, total) = await _getStudentsUseCase.ExecuteAsync(0, int.MaxValue);
+            Response.Headers.Append("Content-Range", $"students 0-{total - 1}/{total}");
+            return Ok(students);
+        }
     }
 
     [HttpGet("{id:int}")]
+    [Authorize(Policy = "student.read")]
     public async Task<IActionResult> GetById(int id)
     {
         var student = await _getStudentByIdUseCase.ExecuteAsync(id);
@@ -51,6 +67,7 @@ public class StudentsController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Policy = "student.update")]
     public async Task<IActionResult> Update(int id, [FromBody] CreateStudentDTO dto)
     {
         Console.WriteLine($"=== PUT /api/students/{id} ===");
@@ -67,6 +84,7 @@ public class StudentsController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Policy = "student.delete")]
     public async Task<IActionResult> Delete(int id)
     {
         var deleted = await _deleteStudentUseCase.ExecuteAsync(id);
@@ -75,6 +93,7 @@ public class StudentsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = "student.create")]
     public async Task<IActionResult> Create([FromBody] CreateStudentDTO dto)
     {
         try

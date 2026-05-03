@@ -1,0 +1,25 @@
+﻿using System;
+using System.Collections.Generic;
+
+namespace SRJBackend.Infrastructure.Models;
+
+public partial class Enrollment
+{
+    public int Id { get; set; }
+
+    public string Code { get; set; } = null!;
+
+    public int CodeNumber { get; set; }
+
+    public int GradeOfferingShiftSectionId { get; set; }
+
+    public int? StudentId { get; set; }
+
+    public int SchoolFeeConceptId { get; set; }
+
+    public virtual GradeOfferingShiftSection GradeOfferingShiftSection { get; set; } = null!;
+
+    public virtual SchoolFeeConcept SchoolFeeConcept { get; set; } = null!;
+
+    public virtual Student? Student { get; set; }
+}
