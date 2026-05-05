@@ -88,7 +88,8 @@ public class InstitutionsController : ControllerBase
         try
         {
             await _updateInstitutionUseCase.ExecuteAsync(id, dto);
-            return NoContent();
+            var updated = await _getInstitutionByIdUseCase.ExecuteAsync(id);
+            return Ok(updated);
         }
         catch (KeyNotFoundException)
         {

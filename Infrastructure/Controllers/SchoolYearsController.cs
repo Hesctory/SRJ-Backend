@@ -92,7 +92,8 @@ public class SchoolYearsController : ControllerBase
         try
         {
             await _updateSchoolYearUseCase.ExecuteAsync(id, dto);
-            return NoContent();
+            var updated = await _getSchoolYearByIdUseCase.ExecuteAsync(id);
+            return Ok(updated);
         }
         catch (KeyNotFoundException)
         {

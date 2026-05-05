@@ -81,7 +81,8 @@ public class LevelsController : ControllerBase
         try
         {
             await _updateLevelUseCase.ExecuteAsync(id, dto);
-            return NoContent();
+            var updated = await _getLevelByIdUseCase.ExecuteAsync(id);
+            return Ok(updated);
         }
         catch (KeyNotFoundException)
         {

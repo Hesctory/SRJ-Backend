@@ -85,7 +85,8 @@ public class GradeOfferingsController : ControllerBase
         try
         {
             await _updateGradeOfferingUseCase.ExecuteAsync(id, dto);
-            return NoContent();
+            var updated = await _getGradeOfferingByIdUseCase.ExecuteAsync(id);
+            return Ok(updated);
         }
         catch (KeyNotFoundException)
         {
