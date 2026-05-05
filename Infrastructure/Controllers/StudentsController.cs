@@ -57,7 +57,7 @@ public class StudentsController : ControllerBase
     }
 
     [HttpGet("{id:int}")]
-    [Authorize(Policy = "student.read")]
+    //[Authorize(Policy = "student.read")]
     public async Task<IActionResult> GetById(int id)
     {
         var student = await _getStudentByIdUseCase.ExecuteAsync(id);
@@ -75,7 +75,8 @@ public class StudentsController : ControllerBase
         try
         {
             await _updateStudentUseCase.ExecuteAsync(id, dto);
-            return NoContent();
+            var updated = await _getStudentByIdUseCase.ExecuteAsync(id);
+            return Ok(updated);
         }
         catch (KeyNotFoundException)
         {
