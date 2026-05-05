@@ -16,6 +16,8 @@ public class StudentRepository : IStudentRepository
 
     public async Task<(List<DStudent> Items, int Total)> GetPagedAsync(int skip, int take)
     {
+        var blockedNames = new[] { StudentStateNames.Blocked.ToLower(), StudentStateNames.Expelled.ToLower(), StudentStateNames.Withdrawn.ToLower() };
+
         var query = _context.Students
             .Include(s => s.EducationalPerson)
                 .ThenInclude(ep => ep.Person)
@@ -27,7 +29,26 @@ public class StudentRepository : IStudentRepository
         var total = await query.CountAsync();
         var students = await query.Skip(skip).Take(take).ToListAsync();
 
-        return (students.Select(MapToDomain).ToList(), total);
+        var result = new List<DStudent>();
+        foreach (var s in students)
+        {
+            var mapped = MapToDomain(s);
+            var hasEligibleYears = await _context.SchoolYears
+                .Where(y => y.IsActive == true)
+                .AnyAsync(y =>
+                    !_context.Enrollments.Any(e =>
+                        e.StudentId == s.EducationalPersonId &&
+                        e.GradeOfferingShiftSection.GradeOfferingShift.GradeOffering.SchoolYearId == y.Id) &&
+                    !_context.StudentStatesByYears.Any(st =>
+                        st.StudentId == s.EducationalPersonId &&
+                        st.SchoolYearId == y.Id &&
+                        st.Status != null &&
+                        blockedNames.Contains(st.Status.Name.ToLower())));
+            mapped.HasEligibleYears = hasEligibleYears;
+            result.Add(mapped);
+        }
+
+        return (result, total);
     }
 
     public async Task CreateAsync(DStudent student, int personId)

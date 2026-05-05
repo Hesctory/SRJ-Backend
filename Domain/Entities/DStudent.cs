@@ -10,6 +10,7 @@ public class DStudent : DEducationalPerson
     public short? Siblings { get; private set; }
     public int? ChildbirthTypeId { get; private set; }
     public List<DFamiliar> Familiars { get; private set; }
+    public bool HasEligibleYears { get; set; }
 
     public DStudent(
         int id,

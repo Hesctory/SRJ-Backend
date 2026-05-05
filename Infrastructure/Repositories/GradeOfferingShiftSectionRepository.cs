@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SRJBackend.Application.DTOs;
 using SRJBackend.Application.Interfaces;
 using SRJBackend.Infrastructure.Models;
 
@@ -54,5 +55,22 @@ public class GradeOfferingShiftSectionRepository : IGradeOfferingShiftSectionRep
 
         _context.GradeOfferingShiftSections.RemoveRange(sections);
         await _context.SaveChangesAsync();
+    }
+
+    public async Task<List<SectionDTO>> GetAllAsync(int? gradeOfferingShiftId = null)
+    {
+        var query = _context.GradeOfferingShiftSections.AsQueryable();
+
+        if (gradeOfferingShiftId.HasValue)
+            query = query.Where(sec => sec.GradeOfferingShiftId == gradeOfferingShiftId.Value);
+
+        return await query
+            .Select(sec => new SectionDTO
+            {
+                Id = sec.Id,
+                Name = "Section " + sec.Section,
+                GradeOfferingShiftId = sec.GradeOfferingShiftId
+            })
+            .ToListAsync();
     }
 }

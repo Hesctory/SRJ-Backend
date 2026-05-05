@@ -12,4 +12,5 @@ public interface ISchoolYearRepository
     Task<int> CreateAsync(CreateSchoolYearDTO dto);
     Task UpdateAsync(int id, CreateSchoolYearDTO dto);
     Task<bool> DeleteAsync(int id);
+    Task<bool> IsOpenAsync(int id);
 }

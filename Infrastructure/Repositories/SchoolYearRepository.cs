@@ -112,4 +112,9 @@ public class SchoolYearRepository : ISchoolYearRepository
         await _context.SaveChangesAsync();
         return true;
     }
+
+    public async Task<bool> IsOpenAsync(int id)
+    {
+        return await _context.SchoolYears.AnyAsync(s => s.Id == id && s.IsActive == true);
+    }
 }

@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SRJBackend.Application;
 using SRJBackend.Application.DTOs;
 using SRJBackend.Application.UseCases;
 
@@ -12,22 +13,28 @@ public class StudentsController : ControllerBase
 {
     private readonly GetStudentsUseCase _getStudentsUseCase;
     private readonly GetStudentByIdUseCase _getStudentByIdUseCase;
-    private readonly CreateStudentUseCase _createStudentUseCase;
     private readonly UpdateStudentUseCase _updateStudentUseCase;
     private readonly DeleteStudentUseCase _deleteStudentUseCase;
+    private readonly EnrollStudentUseCase _enrollStudentUseCase;
+    private readonly ReenrollStudentUseCase _reenrollStudentUseCase;
+    private readonly GetEligibleSchoolYearsForStudentUseCase _getEligibleSchoolYearsUseCase;
 
     public StudentsController(
         GetStudentsUseCase getStudentsUseCase,
         GetStudentByIdUseCase getStudentByIdUseCase,
-        CreateStudentUseCase createStudentUseCase,
         UpdateStudentUseCase updateStudentUseCase,
-        DeleteStudentUseCase deleteStudentUseCase)
+        DeleteStudentUseCase deleteStudentUseCase,
+        EnrollStudentUseCase enrollStudentUseCase,
+        ReenrollStudentUseCase reenrollStudentUseCase,
+        GetEligibleSchoolYearsForStudentUseCase getEligibleSchoolYearsUseCase)
     {
         _getStudentsUseCase = getStudentsUseCase;
         _getStudentByIdUseCase = getStudentByIdUseCase;
-        _createStudentUseCase = createStudentUseCase;
         _updateStudentUseCase = updateStudentUseCase;
         _deleteStudentUseCase = deleteStudentUseCase;
+        _enrollStudentUseCase = enrollStudentUseCase;
+        _reenrollStudentUseCase = reenrollStudentUseCase;
+        _getEligibleSchoolYearsUseCase = getEligibleSchoolYearsUseCase;
     }
 
     [HttpGet]
@@ -57,13 +64,27 @@ public class StudentsController : ControllerBase
     }
 
     [HttpGet("{id:int}")]
-    //[Authorize(Policy = "student.read")]
     public async Task<IActionResult> GetById(int id)
     {
         var student = await _getStudentByIdUseCase.ExecuteAsync(id);
         if (student == null) return NotFound();
         Console.WriteLine(JsonSerializer.Serialize(student, new JsonSerializerOptions { WriteIndented = true }));
         return Ok(student);
+    }
+
+    [HttpGet("{id:int}/eligible-school-years")]
+    [Authorize(Policy = "enrollment.read")]
+    public async Task<IActionResult> GetEligibleSchoolYears(int id)
+    {
+        try
+        {
+            var years = await _getEligibleSchoolYearsUseCase.ExecuteAsync(id);
+            return Ok(years);
+        }
+        catch (DomainException ex)
+        {
+            return NotFound(new ErrorDTO { Code = ex.Code, Message = ex.Message });
+        }
     }
 
     [HttpPut("{id:int}")]
@@ -93,18 +114,35 @@ public class StudentsController : ControllerBase
         return NoContent();
     }
 
-    [HttpPost]
+    [HttpPost("enroll")]
     [Authorize(Policy = "student.create")]
-    public async Task<IActionResult> Create([FromBody] CreateStudentDTO dto)
+    public async Task<IActionResult> Enroll([FromBody] EnrollStudentDTO dto)
     {
         try
         {
-            var id = await _createStudentUseCase.ExecuteAsync(dto);
-            return CreatedAtAction(nameof(GetById), new { id }, new { id });
+            var result = await _enrollStudentUseCase.ExecuteAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = result.StudentId }, result);
         }
-        catch (InvalidOperationException ex)
+        catch (DomainException ex)
         {
-            return Conflict(new { message = ex.Message });
+            return Conflict(new ErrorDTO { Code = ex.Code, Message = ex.Message });
+        }
+    }
+
+    [HttpPost("{id:int}/reenroll")]
+    [Authorize(Policy = "enrollment.create")]
+    public async Task<IActionResult> Reenroll(int id, [FromBody] CreateEnrollmentDTO dto)
+    {
+        try
+        {
+            var result = await _reenrollStudentUseCase.ExecuteAsync(id, dto);
+            return Ok(result);
+        }
+        catch (DomainException ex)
+        {
+            if (ex.Code == "STUDENT_NOT_FOUND")
+                return NotFound(new ErrorDTO { Code = ex.Code, Message = ex.Message });
+            return Conflict(new ErrorDTO { Code = ex.Code, Message = ex.Message });
         }
     }
 }

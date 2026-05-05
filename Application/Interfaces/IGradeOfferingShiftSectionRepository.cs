@@ -1,3 +1,5 @@
+using SRJBackend.Application.DTOs;
+
 namespace SRJBackend.Application.Interfaces;
 
 public interface IGradeOfferingShiftSectionRepository
@@ -6,4 +8,5 @@ public interface IGradeOfferingShiftSectionRepository
     Task AddRangeAsync(int gradeOfferingShiftId, short fromNumber, short toNumber);
     Task RemoveAboveAsync(int gradeOfferingShiftId, short threshold);
     Task RemoveAllByShiftAsync(int gradeOfferingShiftId);
+    Task<List<SectionDTO>> GetAllAsync(int? gradeOfferingShiftId = null);
 }

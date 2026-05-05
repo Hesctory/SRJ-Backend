@@ -50,6 +50,7 @@ builder.Services.AddScoped<ILevelRepository, LevelRepository>();
 builder.Services.AddScoped<IShiftRepository, ShiftRepository>();
 builder.Services.AddScoped<IGradeOfferingRepository, GradeOfferingRepository>();
 builder.Services.AddScoped<IGradeOfferingShiftSectionRepository, GradeOfferingShiftSectionRepository>();
+builder.Services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<LoginUseCase>();
 builder.Services.AddScoped<CreateStudentUseCase>();
@@ -99,6 +100,10 @@ builder.Services.AddScoped<GetGradeOfferingByIdUseCase>();
 builder.Services.AddScoped<CreateGradeOfferingUseCase>();
 builder.Services.AddScoped<UpdateGradeOfferingUseCase>();
 builder.Services.AddScoped<DeleteGradeOfferingUseCase>();
+builder.Services.AddScoped<EnrollStudentUseCase>();
+builder.Services.AddScoped<ReenrollStudentUseCase>();
+builder.Services.AddScoped<GetEligibleSchoolYearsForStudentUseCase>();
+builder.Services.AddScoped<GetSectionsUseCase>();
 
 builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
 builder.Services.AddSingleton<IAuthorizationMiddlewareResultHandler, CustomAuthorizationMiddlewareResultHandler>();

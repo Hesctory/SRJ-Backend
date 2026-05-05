@@ -19,9 +19,9 @@ public class GetStudentsUseCase
         {
             id = s.Id,
             FullName = s.FullName,
-            Dni = s.IdDocumentNumber
+            Dni = s.IdDocumentNumber,
+            HasEligibleYears = s.HasEligibleYears
         }).ToList();
-        //Console.WriteLine(items[0].id);
         return (items, total);
     }
 }
