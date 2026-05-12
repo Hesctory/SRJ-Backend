@@ -68,7 +68,7 @@ public class StudentsController : ControllerBase
 
     [HttpPut("{id:int}")]
     [Authorize(Policy = "student.update")]
-    public async Task<IActionResult> Update(int id, [FromBody] CreateStudentDTO dto)
+    public async Task<IActionResult> Update(int id, [FromBody] UpdateStudentDTO dto)
     {
         Console.WriteLine($"=== PUT /api/students/{id} ===");
         Console.WriteLine(JsonSerializer.Serialize(dto, new JsonSerializerOptions { WriteIndented = true }));

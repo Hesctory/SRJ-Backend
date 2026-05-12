@@ -38,6 +38,39 @@ public static class StudentMapper
         );
     }
 
+    public static DStudent FromDTO(UpdateStudentDTO dto, int id = 0)
+    {
+        var familiars = dto.Familiars.Select(FamiliarFromDTO).ToList();
+        return new DStudent(
+            id: id,
+            names: dto.Names,
+            paternalLastname: dto.PaternalLastname,
+            maternalLastname: dto.MaternalLastname,
+            genderId: dto.GenderId,
+            birthDate: dto.BirthDate,
+            documentTypeId: dto.DocumentTypeId,
+            idDocumentNumber: dto.IdDocumentNumber,
+            address: dto.Address ?? string.Empty,
+            addressUbigeoId: dto.AddressLocation!.DistrictId,
+            religionId: dto.ReligionId,
+            civilStateId: dto.CivilStateId,
+            email: dto.Email,
+            landlinePhone: dto.LandlinePhone,
+            cellPhone: dto.CellPhone,
+            nativeLanguageId: dto.NativeLanguageId,
+            ethnicSelfIdentificationId: dto.EthnicSelfIdentificationId,
+            secondLanguageIds: dto.SecondLanguageIds,
+            hasElectronicDevices: dto.HasElectronicDevices,
+            hasInternetAccess: dto.HasInternetAccess,
+            birthLocation: new DLocation(dto.BirthLocation.DepartmentId, dto.BirthLocation.ProvinceId, dto.BirthLocation.DistrictId),
+            addressLocation: new DLocation(dto.AddressLocation.DepartmentId, dto.AddressLocation.ProvinceId, dto.AddressLocation.DistrictId),
+            hasDisability: dto.HasDisability,
+            siblings: dto.Siblings,
+            childbirthTypeId: dto.ChildbirthTypeId,
+            familiars: familiars
+        );
+    }
+
     public static DFamiliar FamiliarFromDTO(CreateFamiliarDTO dto)
     {
         var addressLocation = dto.AddressLocation != null

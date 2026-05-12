@@ -52,4 +52,5 @@ public class CreateStudentDTO : EducationalPersonDataDTO
     public short? Siblings { get; set; }
     public int? ChildbirthTypeId { get; set; }
     public List<CreateFamiliarDTO> Familiars { get; set; } = new();
+    public CreateEnrollmentDTO Enrollment { get; set; } = null!;
 }

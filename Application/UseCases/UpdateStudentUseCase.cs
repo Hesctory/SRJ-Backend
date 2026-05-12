@@ -27,7 +27,7 @@ public class UpdateStudentUseCase
         _familiarStudentRelationshipRepository = familiarStudentRelationshipRepository;
     }
 
-    public async Task ExecuteAsync(int id, CreateStudentDTO dto)
+    public async Task ExecuteAsync(int id, UpdateStudentDTO dto)
     {
         if (!await _studentRepository.ExistsAsync(id))
             throw new KeyNotFoundException("Student not found.");

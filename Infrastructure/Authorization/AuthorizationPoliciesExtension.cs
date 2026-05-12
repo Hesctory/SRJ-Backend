@@ -64,6 +64,23 @@ public static class AuthorizationPoliciesExtension
                 policy.Requirements.Add(new PermissionRequirement("grade-offering.update")));
             options.AddPolicy("grade-offering.delete", policy =>
                 policy.Requirements.Add(new PermissionRequirement("grade-offering.delete")));
+
+            options.AddPolicy("enrollment.create", policy =>
+                policy.Requirements.Add(new PermissionRequirement("enrollment.create")));
+            options.AddPolicy("enrollment.read", policy =>
+                policy.Requirements.Add(new PermissionRequirement("enrollment.read")));
+
+            options.AddPolicy("section.read", policy =>
+                policy.Requirements.Add(new PermissionRequirement("section.read")));
+
+            options.AddPolicy("school-fee-concept.create", policy =>
+                policy.Requirements.Add(new PermissionRequirement("school-fee-concept.create")));
+            options.AddPolicy("school-fee-concept.read", policy =>
+                policy.Requirements.Add(new PermissionRequirement("school-fee-concept.read")));
+            options.AddPolicy("school-fee-concept.update", policy =>
+                policy.Requirements.Add(new PermissionRequirement("school-fee-concept.update")));
+            options.AddPolicy("school-fee-concept.delete", policy =>
+                policy.Requirements.Add(new PermissionRequirement("school-fee-concept.delete")));
         });
 
         return services;

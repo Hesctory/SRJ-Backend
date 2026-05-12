@@ -11,17 +11,23 @@ public class CreateStudentUseCase
     private readonly IEducationalPersonRepository _educationalPersonRepository;
     private readonly IStudentRepository _studentRepository;
     private readonly IFamiliarRepository _familiarRepository;
+    private readonly IEnrollmentRepository _enrollmentRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
     public CreateStudentUseCase(
         IPersonRepository personRepository,
         IEducationalPersonRepository educationalPersonRepository,
         IStudentRepository studentRepository,
-        IFamiliarRepository familiarRepository)
+        IFamiliarRepository familiarRepository,
+        IEnrollmentRepository enrollmentRepository,
+        IUnitOfWork unitOfWork)
     {
         _personRepository = personRepository;
         _educationalPersonRepository = educationalPersonRepository;
         _studentRepository = studentRepository;
         _familiarRepository = familiarRepository;
+        _enrollmentRepository = enrollmentRepository;
+        _unitOfWork = unitOfWork;
     }
 
     private async Task EnsurePersonDoesNotExistAsync(int documentTypeId, string documentNumber)
@@ -31,62 +37,47 @@ public class CreateStudentUseCase
             throw new InvalidOperationException("Esta persona ya está registrada. Se ha confundido de DNI?");
     }
 
-    private static void PrintDTO(CreateStudentDTO dto)
-    {
-        Console.WriteLine("=== CreateStudentDTO ===");
-        Console.WriteLine($"  Names:             {dto.Names}");
-        Console.WriteLine($"  PaternalLastname:  {dto.PaternalLastname}");
-        Console.WriteLine($"  MaternalLastname:  {dto.MaternalLastname}");
-        Console.WriteLine($"  GenderId:          {dto.GenderId}");
-        Console.WriteLine($"  BirthDate:         {dto.BirthDate}");
-        Console.WriteLine($"  DocumentTypeId:    {dto.DocumentTypeId}");
-        Console.WriteLine($"  IdDocumentNumber:  {dto.IdDocumentNumber}");
-        Console.WriteLine($"  ReligionId:        {dto.ReligionId}");
-        Console.WriteLine($"  CivilStateId:      {dto.CivilStateId}");
-        Console.WriteLine($"  Address:           {dto.Address}");
-        Console.WriteLine($"  AddressLocation:   Dept={dto.AddressLocation?.DepartmentId} Prov={dto.AddressLocation?.ProvinceId} Dist={dto.AddressLocation?.DistrictId}");
-        Console.WriteLine($"  Email:             {dto.Email}");
-        Console.WriteLine($"  LandlinePhone:     {dto.LandlinePhone}");
-        Console.WriteLine($"  CellPhone:         {dto.CellPhone}");
-        Console.WriteLine($"  NativeLanguageId:  {dto.NativeLanguageId}");
-        Console.WriteLine($"  EthnicSelfIdentId: {dto.EthnicSelfIdentificationId}");
-        Console.WriteLine($"  SecondLanguageIds: [{string.Join(", ", dto.SecondLanguageIds ?? [])}]");
-        Console.WriteLine($"  BirthLocation:     Dept={dto.BirthLocation?.DepartmentId} Prov={dto.BirthLocation?.ProvinceId} Dist={dto.BirthLocation?.DistrictId}");
-        Console.WriteLine($"  HasElectronicDev:  {dto.HasElectronicDevices}");
-        Console.WriteLine($"  HasInternetAccess: {dto.HasInternetAccess}");
-        Console.WriteLine($"  HasDisability:     {dto.HasDisability}");
-        Console.WriteLine($"  Siblings:          {dto.Siblings}");
-        Console.WriteLine($"  ChildbirthTypeId:  {dto.ChildbirthTypeId}");
-        Console.WriteLine($"  Familiars ({dto.Familiars.Count}):");
-        foreach (var f in dto.Familiars)
-            Console.WriteLine($"    - {f.Names} {f.PaternalLastname} | Doc={f.IdDocumentNumber} | RelId={f.RelationshipId} | Guardian={f.IsGuardian}");
-        Console.WriteLine("=======================");
-    }
-
     public async Task<int> ExecuteAsync(CreateStudentDTO dto)
     {
-        PrintDTO(dto);
         await EnsurePersonDoesNotExistAsync(dto.DocumentTypeId, dto.IdDocumentNumber);
 
-        var student = StudentMapper.FromDTO(dto);
+        var enrollmentDto = dto.Enrollment;
+        var sectionId = await _enrollmentRepository.FindSectionIdAsync(
+            enrollmentDto.SchoolYearId, enrollmentDto.GradeId, enrollmentDto.ShiftId, enrollmentDto.SectionId);
 
-        var personId = await _personRepository.CreateAsync(student);
+        if (sectionId == null)
+            throw new KeyNotFoundException("La sección indicada no existe o no corresponde al año escolar, grado y turno especificados.");
 
-        await _educationalPersonRepository.CreateAsync(personId, student.NativeLanguageId, student.EthnicSelfIdentificationId);
-
-        if (student.SecondLanguageIds != null && student.SecondLanguageIds.Count > 0)
-            await _educationalPersonRepository.AddSecondLanguagesAsync(personId, student.SecondLanguageIds);
-
-        await _studentRepository.CreateAsync(student, personId);
-        await _studentRepository.CreateHomeAsync(student, personId);
-
-        foreach (var familiar in student.Familiars)
+        await _unitOfWork.BeginAsync();
+        try
         {
-            var familiarPersonId = await ResolveFamiliarAsync(familiar);
-            await _familiarRepository.CreateRelationshipAsync(familiar, familiarPersonId, personId);
-        }
+            var student = StudentMapper.FromDTO(dto);
 
-        return personId;
+            var personId = await _personRepository.CreateAsync(student);
+
+            await _educationalPersonRepository.CreateAsync(personId, student.NativeLanguageId, student.EthnicSelfIdentificationId);
+
+            if (student.SecondLanguageIds != null && student.SecondLanguageIds.Count > 0)
+                await _educationalPersonRepository.AddSecondLanguagesAsync(personId, student.SecondLanguageIds);
+
+            await _studentRepository.CreateAsync(student, personId);
+            await _studentRepository.CreateHomeAsync(student, personId);
+
+            foreach (var familiar in student.Familiars)
+            {
+                var familiarPersonId = await ResolveFamiliarAsync(familiar);
+                await _familiarRepository.CreateRelationshipAsync(familiar, familiarPersonId, personId);
+            }
+            await _enrollmentRepository.CreateAsync(personId, sectionId.Value, enrollmentDto.SchoolFeeConceptId, enrollmentDto.SchoolYearId, enrollmentDto.PreviousSchool);
+
+            await _unitOfWork.CommitAsync();
+            return personId;
+        }
+        catch
+        {
+            await _unitOfWork.RollbackAsync();
+            throw;
+        }
     }
 
     private async Task<int> ResolveFamiliarAsync(DFamiliar familiar)

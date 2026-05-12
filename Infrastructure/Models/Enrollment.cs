@@ -17,9 +17,15 @@ public partial class Enrollment
 
     public int SchoolFeeConceptId { get; set; }
 
+    public string? PreviousSchool { get; set; }
+
+    public int SchoolYearId { get; set; }
+
     public virtual GradeOfferingShiftSection GradeOfferingShiftSection { get; set; } = null!;
 
     public virtual SchoolFeeConcept SchoolFeeConcept { get; set; } = null!;
+
+    public virtual SchoolYear SchoolYear { get; set; } = null!;
 
     public virtual Student? Student { get; set; }
 }

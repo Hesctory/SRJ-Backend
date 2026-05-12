@@ -15,6 +15,8 @@ public partial class SchoolYear
 
     public bool? IsActive { get; set; }
 
+    public virtual ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
+
     public virtual ICollection<GradeOffering> GradeOfferings { get; set; } = new List<GradeOffering>();
 
     public virtual ICollection<SchoolFee> SchoolFees { get; set; } = new List<SchoolFee>();

@@ -91,6 +91,10 @@ public partial class SRJDbContext : DbContext
 
     public virtual DbSet<StudentHome> StudentHomes { get; set; }
 
+    public virtual DbSet<StudentState> StudentStates { get; set; }
+
+    public virtual DbSet<StudentStatesByYear> StudentStatesByYears { get; set; }
+
     public virtual DbSet<Ubigeo> Ubigeos { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
@@ -313,12 +317,14 @@ public partial class SRJDbContext : DbContext
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Code)
-                .HasMaxLength(6)
+                .HasMaxLength(11)
                 .IsFixedLength()
                 .HasColumnName("code");
             entity.Property(e => e.CodeNumber).HasColumnName("code_number");
             entity.Property(e => e.GradeOfferingShiftSectionId).HasColumnName("grade_offering_shift_section_id");
+            entity.Property(e => e.PreviousSchool).HasColumnName("previous_school");
             entity.Property(e => e.SchoolFeeConceptId).HasColumnName("school_fee_concept_id");
+            entity.Property(e => e.SchoolYearId).HasColumnName("school_year_id");
             entity.Property(e => e.StudentId).HasColumnName("student_id");
 
             entity.HasOne(d => d.GradeOfferingShiftSection).WithMany(p => p.Enrollments)
@@ -330,6 +336,11 @@ public partial class SRJDbContext : DbContext
                 .HasForeignKey(d => d.SchoolFeeConceptId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("enrollment_school_fee_concept_id_fkey");
+
+            entity.HasOne(d => d.SchoolYear).WithMany(p => p.Enrollments)
+                .HasForeignKey(d => d.SchoolYearId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("enrollment_school_year_id_fkey");
 
             entity.HasOne(d => d.Student).WithMany(p => p.Enrollments)
                 .HasForeignKey(d => d.StudentId)
@@ -637,6 +648,8 @@ public partial class SRJDbContext : DbContext
 
             entity.ToTable("person");
 
+            entity.HasIndex(e => new { e.DocumentTypeId, e.IdDocumentNumber }, "unique_document_type_number").IsUnique();
+
             entity.HasIndex(e => e.IdDocumentNumber, "unique_id_document_number").IsUnique();
 
             entity.Property(e => e.Id).HasColumnName("id");
@@ -909,6 +922,47 @@ public partial class SRJDbContext : DbContext
                 .HasForeignKey<StudentHome>(d => d.StudentId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("student_homes_student_id_fkey");
+        });
+
+        modelBuilder.Entity<StudentState>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("student_states_pkey");
+
+            entity.ToTable("student_states");
+
+            entity.HasIndex(e => e.Name, "student_states_name_key").IsUnique();
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Description).HasColumnName("description");
+            entity.Property(e => e.Name)
+                .HasMaxLength(40)
+                .HasColumnName("name");
+        });
+
+        modelBuilder.Entity<StudentStatesByYear>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToTable("student_states_by_year");
+
+            entity.Property(e => e.SchoolYearId).HasColumnName("school_year_id");
+            entity.Property(e => e.StatusId).HasColumnName("status_id");
+            entity.Property(e => e.StudentId).HasColumnName("student_id");
+
+            entity.HasOne(d => d.SchoolYear).WithMany()
+                .HasForeignKey(d => d.SchoolYearId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("student_states_by_year_school_year_id_fkey");
+
+            entity.HasOne(d => d.Status).WithMany()
+                .HasForeignKey(d => d.StatusId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("student_states_by_year_status_id_fkey");
+
+            entity.HasOne(d => d.Student).WithMany()
+                .HasForeignKey(d => d.StudentId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("student_states_by_year_student_id_fkey");
         });
 
         modelBuilder.Entity<Ubigeo>(entity =>
