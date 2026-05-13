@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SRJBackend.Application.UseCases;
+using SRJBackend.Application.Interfaces;
 
 namespace SRJBackend.Infrastructure.Controllers;
 
@@ -9,46 +9,44 @@ namespace SRJBackend.Infrastructure.Controllers;
 [Route("api/shifts")]
 public class ShiftsController : ControllerBase
 {
-    private readonly GetShiftsUseCase _getShiftsUseCase;
-    private readonly GetShiftByIdUseCase _getShiftByIdUseCase;
+    private readonly IShiftQueries _shiftQueries;
 
-    public ShiftsController(GetShiftsUseCase getShiftsUseCase, GetShiftByIdUseCase getShiftByIdUseCase)
+    public ShiftsController(IShiftQueries shiftQueries)
     {
-        _getShiftsUseCase = getShiftsUseCase;
-        _getShiftByIdUseCase = getShiftByIdUseCase;
+        _shiftQueries = shiftQueries;
     }
 
     [HttpGet]
     [Authorize(Policy = "shift.read")]
-    public async Task<IActionResult> GetAll([FromQuery] string? range = null)
+    public async Task<IActionResult> GetAll([FromQuery] string? range = null, [FromQuery] string? filter = null)
     {
+        Dictionary<string, JsonElement>? filters = null;
+        if (filter != null)
+        {
+            filters = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(filter);
+            if (filters == null) return BadRequest("Invalid filter");
+        }
+
+        int start = 0, take = int.MaxValue;
         if (range != null)
         {
             var bounds = JsonSerializer.Deserialize<int[]>(range)!;
-            if (bounds == null || bounds.Length != 2)
-                return BadRequest("Invalid range");
-            var start = bounds[0];
-            var end = bounds[1];
-            var take = end - start + 1;
+            if (bounds == null || bounds.Length != 2) return BadRequest("Invalid range");
+            start = bounds[0];
+            take = bounds[1] - start + 1;
+        }
 
-            var (items, total) = await _getShiftsUseCase.ExecuteAsync(start, take);
-            var rangeEnd = total == 0 ? 0 : start + items.Count - 1;
-            Response.Headers.Append("Content-Range", $"shifts {start}-{rangeEnd}/{total}");
-            return Ok(items);
-        }
-        else
-        {
-            var (items, total) = await _getShiftsUseCase.ExecuteAsync(0, int.MaxValue);
-            Response.Headers.Append("Content-Range", $"shifts 0-{total - 1}/{total}");
-            return Ok(items);
-        }
+        var (items, total) = await _shiftQueries.GetPagedAsync(start, take, filters);
+        var rangeEnd = total == 0 ? 0 : start + items.Count - 1;
+        Response.Headers.Append("Content-Range", $"shifts {start}-{rangeEnd}/{total}");
+        return Ok(items);
     }
 
     [HttpGet("{id:int}")]
     [Authorize(Policy = "shift.read")]
     public async Task<IActionResult> GetById(int id)
     {
-        var item = await _getShiftByIdUseCase.ExecuteAsync(id);
+        var item = await _shiftQueries.GetByIdAsync(id);
         if (item == null) return NotFound();
         return Ok(item);
     }

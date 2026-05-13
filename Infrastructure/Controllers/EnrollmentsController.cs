@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SRJBackend.Application.DTOs;
+using SRJBackend.Application.Interfaces;
 using SRJBackend.Application.UseCases;
 
 namespace SRJBackend.Infrastructure.Controllers;
@@ -9,17 +10,14 @@ namespace SRJBackend.Infrastructure.Controllers;
 [Route("api/enrollments")]
 public class EnrollmentsController : ControllerBase
 {
-    private readonly GetEnrollmentsByStudentUseCase _getEnrollmentsByStudentUseCase;
-    private readonly GetLatestEnrollmentByStudentUseCase _getLatestEnrollmentByStudentUseCase;
+    private readonly IEnrollmentQueries _enrollmentQueries;
     private readonly CreateEnrollmentUseCase _createEnrollmentUseCase;
 
     public EnrollmentsController(
-        GetEnrollmentsByStudentUseCase getEnrollmentsByStudentUseCase,
-        GetLatestEnrollmentByStudentUseCase getLatestEnrollmentByStudentUseCase,
+        IEnrollmentQueries enrollmentQueries,
         CreateEnrollmentUseCase createEnrollmentUseCase)
     {
-        _getEnrollmentsByStudentUseCase = getEnrollmentsByStudentUseCase;
-        _getLatestEnrollmentByStudentUseCase = getLatestEnrollmentByStudentUseCase;
+        _enrollmentQueries = enrollmentQueries;
         _createEnrollmentUseCase = createEnrollmentUseCase;
     }
 
@@ -27,7 +25,7 @@ public class EnrollmentsController : ControllerBase
     [Authorize(Policy = "enrollment.read")]
     public async Task<IActionResult> GetByStudent(int studentId)
     {
-        var enrollments = await _getEnrollmentsByStudentUseCase.ExecuteAsync(studentId);
+        var enrollments = await _enrollmentQueries.GetByStudentAsync(studentId);
         return Ok(enrollments);
     }
 
@@ -35,7 +33,7 @@ public class EnrollmentsController : ControllerBase
     [Authorize(Policy = "enrollment.read")]
     public async Task<IActionResult> GetLatestByStudent(int studentId)
     {
-        var enrollment = await _getLatestEnrollmentByStudentUseCase.ExecuteAsync(studentId);
+        var enrollment = await _enrollmentQueries.GetLatestByStudentAsync(studentId);
         if (enrollment == null) return NotFound();
         return Ok(enrollment);
     }
@@ -44,18 +42,7 @@ public class EnrollmentsController : ControllerBase
     [Authorize(Policy = "enrollment.create")]
     public async Task<IActionResult> Create([FromBody] EnrollStudentDTO dto)
     {
-        try
-        {
-            var enrollment = await _createEnrollmentUseCase.ExecuteAsync(dto);
-            return CreatedAtAction(nameof(GetLatestByStudent), new { studentId = dto.StudentId }, enrollment);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Conflict(new { message = ex.Message });
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
+        var enrollment = await _createEnrollmentUseCase.ExecuteAsync(dto);
+        return CreatedAtAction(nameof(GetLatestByStudent), new { studentId = dto.StudentId }, enrollment);
     }
 }

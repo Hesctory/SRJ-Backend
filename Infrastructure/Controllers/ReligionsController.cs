@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using SRJBackend.Application.UseCases;
+using SRJBackend.Application.Interfaces;
 
 namespace SRJBackend.Infrastructure.Controllers;
 
@@ -7,17 +7,17 @@ namespace SRJBackend.Infrastructure.Controllers;
 [Route("api/religions")]
 public class ReligionsController : ControllerBase
 {
-    private readonly GetReligionsUseCase _getReligionsUseCase;
+    private readonly ILookupQueries _lookupQueries;
 
-    public ReligionsController(GetReligionsUseCase getReligionsUseCase)
+    public ReligionsController(ILookupQueries lookupQueries)
     {
-        _getReligionsUseCase = getReligionsUseCase;
+        _lookupQueries = lookupQueries;
     }
 
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        var religions = await _getReligionsUseCase.ExecuteAsync();
+        var religions = await _lookupQueries.GetReligionsAsync();
         var total = religions.Count;
         Response.Headers.Append("Content-Range", $"religions 0-{(total == 0 ? 0 : total - 1)}/{total}");
         return Ok(religions);

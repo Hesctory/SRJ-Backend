@@ -2,6 +2,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SRJBackend.Application.DTOs;
+using SRJBackend.Application.Interfaces;
 using SRJBackend.Application.UseCases;
 
 namespace SRJBackend.Infrastructure.Controllers;
@@ -10,21 +11,18 @@ namespace SRJBackend.Infrastructure.Controllers;
 [Route("api/grade-offerings")]
 public class GradeOfferingsController : ControllerBase
 {
-    private readonly GetGradeOfferingsUseCase _getGradeOfferingsUseCase;
-    private readonly GetGradeOfferingByIdUseCase _getGradeOfferingByIdUseCase;
+    private readonly IGradeOfferingQueries _gradeOfferingQueries;
     private readonly CreateGradeOfferingUseCase _createGradeOfferingUseCase;
     private readonly UpdateGradeOfferingUseCase _updateGradeOfferingUseCase;
     private readonly DeleteGradeOfferingUseCase _deleteGradeOfferingUseCase;
 
     public GradeOfferingsController(
-        GetGradeOfferingsUseCase getGradeOfferingsUseCase,
-        GetGradeOfferingByIdUseCase getGradeOfferingByIdUseCase,
+        IGradeOfferingQueries gradeOfferingQueries,
         CreateGradeOfferingUseCase createGradeOfferingUseCase,
         UpdateGradeOfferingUseCase updateGradeOfferingUseCase,
         DeleteGradeOfferingUseCase deleteGradeOfferingUseCase)
     {
-        _getGradeOfferingsUseCase = getGradeOfferingsUseCase;
-        _getGradeOfferingByIdUseCase = getGradeOfferingByIdUseCase;
+        _gradeOfferingQueries = gradeOfferingQueries;
         _createGradeOfferingUseCase = createGradeOfferingUseCase;
         _updateGradeOfferingUseCase = updateGradeOfferingUseCase;
         _deleteGradeOfferingUseCase = deleteGradeOfferingUseCase;
@@ -38,25 +36,21 @@ public class GradeOfferingsController : ControllerBase
         if (filter != null)
         {
             filters = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(filter);
-            if (filters == null)
-                return BadRequest("Invalid filter");
+            if (filters == null) return BadRequest("Invalid filter");
         }
 
         int start = 0, take = int.MaxValue;
         if (range != null)
         {
             var bounds = JsonSerializer.Deserialize<int[]>(range)!;
-            if (bounds == null || bounds.Length != 2)
-                return BadRequest("Invalid range");
+            if (bounds == null || bounds.Length != 2) return BadRequest("Invalid range");
             start = bounds[0];
             take = bounds[1] - start + 1;
         }
 
-        var (items, total) = await _getGradeOfferingsUseCase.ExecuteAsync(start, take, filters);
+        var (items, total) = await _gradeOfferingQueries.GetPagedAsync(start, take, filters);
         var rangeEnd = total == 0 ? 0 : start + items.Count - 1;
         Response.Headers.Append("Content-Range", $"grade-offerings {start}-{rangeEnd}/{total}");
-        Console.WriteLine($"=== GET /api/grade-offerings | filter={filter ?? "none"} range={range ?? "none"} => {items.Count}/{total} ===");
-        Console.WriteLine(JsonSerializer.Serialize(items, new JsonSerializerOptions { WriteIndented = true }));
         return Ok(items);
     }
 
@@ -64,9 +58,8 @@ public class GradeOfferingsController : ControllerBase
     [Authorize(Policy = "grade-offering.read")]
     public async Task<IActionResult> GetById(int id)
     {
-        var item = await _getGradeOfferingByIdUseCase.ExecuteAsync(id);
+        var item = await _gradeOfferingQueries.GetByIdAsync(id);
         if (item == null) return NotFound();
-        Console.WriteLine(JsonSerializer.Serialize(item, new JsonSerializerOptions { WriteIndented = true }));
         return Ok(item);
     }
 
@@ -82,16 +75,9 @@ public class GradeOfferingsController : ControllerBase
     [Authorize(Policy = "grade-offering.update")]
     public async Task<IActionResult> Update(int id, [FromBody] CreateGradeOfferingDTO dto)
     {
-        try
-        {
-            await _updateGradeOfferingUseCase.ExecuteAsync(id, dto);
-            var updated = await _getGradeOfferingByIdUseCase.ExecuteAsync(id);
-            return Ok(updated);
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound();
-        }
+        await _updateGradeOfferingUseCase.ExecuteAsync(id, dto);
+        var updated = await _gradeOfferingQueries.GetByIdAsync(id);
+        return Ok(updated);
     }
 
     [HttpDelete("{id:int}")]

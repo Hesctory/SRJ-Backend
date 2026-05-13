@@ -2,6 +2,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SRJBackend.Application.DTOs;
+using SRJBackend.Application.Interfaces;
 using SRJBackend.Application.UseCases;
 
 namespace SRJBackend.Infrastructure.Controllers;
@@ -10,21 +11,18 @@ namespace SRJBackend.Infrastructure.Controllers;
 [Route("api/levels")]
 public class LevelsController : ControllerBase
 {
-    private readonly GetLevelsUseCase _getLevelsUseCase;
-    private readonly GetLevelByIdUseCase _getLevelByIdUseCase;
+    private readonly ILevelQueries _levelQueries;
     private readonly CreateLevelUseCase _createLevelUseCase;
     private readonly UpdateLevelUseCase _updateLevelUseCase;
     private readonly DeleteLevelUseCase _deleteLevelUseCase;
 
     public LevelsController(
-        GetLevelsUseCase getLevelsUseCase,
-        GetLevelByIdUseCase getLevelByIdUseCase,
+        ILevelQueries levelQueries,
         CreateLevelUseCase createLevelUseCase,
         UpdateLevelUseCase updateLevelUseCase,
         DeleteLevelUseCase deleteLevelUseCase)
     {
-        _getLevelsUseCase = getLevelsUseCase;
-        _getLevelByIdUseCase = getLevelByIdUseCase;
+        _levelQueries = levelQueries;
         _createLevelUseCase = createLevelUseCase;
         _updateLevelUseCase = updateLevelUseCase;
         _deleteLevelUseCase = deleteLevelUseCase;
@@ -34,35 +32,27 @@ public class LevelsController : ControllerBase
     [Authorize(Policy = "level.read")]
     public async Task<IActionResult> GetAll([FromQuery] string? range = null)
     {
+        int start = 0, take = int.MaxValue;
         if (range != null)
         {
             var bounds = JsonSerializer.Deserialize<int[]>(range)!;
-            if (bounds == null || bounds.Length != 2)
-                return BadRequest("Invalid range");
-            var start = bounds[0];
-            var end = bounds[1];
-            var take = end - start + 1;
+            if (bounds == null || bounds.Length != 2) return BadRequest("Invalid range");
+            start = bounds[0];
+            take = bounds[1] - start + 1;
+        }
 
-            var (levels, total) = await _getLevelsUseCase.ExecuteAsync(start, take);
-            var rangeEnd = total == 0 ? 0 : start + levels.Count - 1;
-            Response.Headers.Append("Content-Range", $"levels {start}-{rangeEnd}/{total}");
-            return Ok(levels);
-        }
-        else
-        {
-            var (levels, total) = await _getLevelsUseCase.ExecuteAsync(0, int.MaxValue);
-            Response.Headers.Append("Content-Range", $"levels 0-{total - 1}/{total}");
-            return Ok(levels);
-        }
+        var (levels, total) = await _levelQueries.GetPagedAsync(start, take);
+        var rangeEnd = total == 0 ? 0 : start + levels.Count - 1;
+        Response.Headers.Append("Content-Range", $"levels {start}-{rangeEnd}/{total}");
+        return Ok(levels);
     }
 
     [HttpGet("{id:int}")]
     [Authorize(Policy = "level.read")]
     public async Task<IActionResult> GetById(int id)
     {
-        var level = await _getLevelByIdUseCase.ExecuteAsync(id);
+        var level = await _levelQueries.GetByIdAsync(id);
         if (level == null) return NotFound();
-        Console.WriteLine(JsonSerializer.Serialize(level, new JsonSerializerOptions { WriteIndented = true }));
         return Ok(level);
     }
 
@@ -78,16 +68,9 @@ public class LevelsController : ControllerBase
     [Authorize(Policy = "level.update")]
     public async Task<IActionResult> Update(int id, [FromBody] CreateLevelDTO dto)
     {
-        try
-        {
-            await _updateLevelUseCase.ExecuteAsync(id, dto);
-            var updated = await _getLevelByIdUseCase.ExecuteAsync(id);
-            return Ok(updated);
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound();
-        }
+        await _updateLevelUseCase.ExecuteAsync(id, dto);
+        var updated = await _levelQueries.GetByIdAsync(id);
+        return Ok(updated);
     }
 
     [HttpDelete("{id:int}")]

@@ -1,102 +1,63 @@
+using SRJBackend.Domain.ValueObjects;
+
 namespace SRJBackend.Domain.Entities;
 
 public class DPerson
 {
     public int Id { get; private set; }
-    public string Names { get; private set; }
-    public string PaternalLastname { get; private set; }
-    public string MaternalLastname { get; private set; }
-    public string FullName => $"{Names} {PaternalLastname} {MaternalLastname}".Trim();
+    public PersonalName Name { get; private set; }
     public int GenderId { get; private set; }
     public DateOnly BirthDate { get; private set; }
-    public int DocumentTypeId { get; private set; }
-    public string IdDocumentNumber { get; private set; }
+    public IdentityDocument Document { get; private set; }
     public string Address { get; private set; }
     public int AddressUbigeoId { get; private set; }
     public int? ReligionId { get; private set; }
     public int? CivilStateId { get; private set; }
-    public string? Email { get; private set; }
-    public string? LandlinePhone { get; private set; }
-    public string? CellPhone { get; private set; }
+    public ContactInfo Contact { get; private set; }
+
+    public string FullName => Name.Full;
 
     public static DPerson Create(
         int id,
-        string names,
-        string paternalLastname,
-        string maternalLastname,
+        PersonalName name,
         int genderId,
         DateOnly birthDate,
-        int documentTypeId,
-        string idDocumentNumber,
+        IdentityDocument document,
         string address,
         int addressUbigeoId,
         int? religionId,
         int? civilStateId,
-        string? email,
-        string? landlinePhone,
-        string? cellPhone)
+        ContactInfo contact)
     {
-        if (string.IsNullOrWhiteSpace(names)) throw new ArgumentException("Names cannot be empty.", nameof(names));
-        if (string.IsNullOrWhiteSpace(paternalLastname)) throw new ArgumentException("Paternal lastname cannot be empty.", nameof(paternalLastname));
-        if (string.IsNullOrWhiteSpace(maternalLastname)) throw new ArgumentException("Maternal lastname cannot be empty.", nameof(maternalLastname));
-        if (string.IsNullOrWhiteSpace(idDocumentNumber)) throw new ArgumentException("Document number cannot be empty.", nameof(idDocumentNumber));
-        if (string.IsNullOrWhiteSpace(address)) throw new ArgumentException("Address cannot be empty.", nameof(address));
         if (genderId <= 0) throw new ArgumentException("Gender is required.", nameof(genderId));
-        if (documentTypeId <= 0) throw new ArgumentException("Document type is required.", nameof(documentTypeId));
-        if (addressUbigeoId <= 0) throw new ArgumentException("Address location is required.", nameof(addressUbigeoId));
         if (birthDate == default) throw new ArgumentException("Birth date is required.", nameof(birthDate));
+        if (string.IsNullOrWhiteSpace(address)) throw new ArgumentException("Address cannot be empty.", nameof(address));
+        if (addressUbigeoId <= 0) throw new ArgumentException("Address location is required.", nameof(addressUbigeoId));
 
-        return new DPerson(id, names, paternalLastname, maternalLastname, genderId, birthDate,
-                           documentTypeId, idDocumentNumber, address, addressUbigeoId,
-                           religionId, civilStateId, email, landlinePhone, cellPhone);
+        return new DPerson(id, name, genderId, birthDate, document, address, addressUbigeoId, religionId, civilStateId, contact);
     }
 
-    public DPerson(
+    protected DPerson(
         int id,
-        string names,
-        string paternalLastname,
-        string maternalLastname,
+        PersonalName name,
         int genderId,
         DateOnly birthDate,
-        int documentTypeId,
-        string idDocumentNumber,
+        IdentityDocument document,
         string address,
         int addressUbigeoId,
         int? religionId,
         int? civilStateId,
-        string? email,
-        string? landlinePhone,
-        string? cellPhone)
+        ContactInfo contact)
     {
         Id = id;
-        Names = names;
-        PaternalLastname = paternalLastname;
-        MaternalLastname = maternalLastname;
+        Name = name;
         GenderId = genderId;
         BirthDate = birthDate;
-        DocumentTypeId = documentTypeId;
-        IdDocumentNumber = idDocumentNumber;
+        Document = document;
         Address = address;
         AddressUbigeoId = addressUbigeoId;
         ReligionId = religionId;
         CivilStateId = civilStateId;
-        Email = email;
-        LandlinePhone = landlinePhone;
-        CellPhone = cellPhone;
+        Contact = contact;
     }
 }
-
-/*
-    Forced Data:
-    string names,
-    string paternalLastname,
-    string maternalLastname,
-    int genderId,
-    DateOnly birthDate,
-    int documentTypeId,
-    string idDocumentNumber,
-    string address,
-    int addressUbigeoId,
-    int? religionId,
-    int? civilStateId
-*/

@@ -54,7 +54,7 @@ public class UpdateStudentUseCase
 
     private async Task<int> ResolveFamiliarAsync(DFamiliar familiar)
     {
-        var existingPersonId = await _personRepository.FindByDocumentAsync(familiar.DocumentTypeId, familiar.IdDocumentNumber);
+        var existingPersonId = await _personRepository.FindByDocumentAsync(familiar.Document.DocumentTypeId, familiar.Document.IdDocumentNumber);
         int personId;
         if (existingPersonId == null)
         {

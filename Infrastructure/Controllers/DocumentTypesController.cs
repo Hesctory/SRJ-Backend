@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using SRJBackend.Application.UseCases;
+using SRJBackend.Application.Interfaces;
 
 namespace SRJBackend.Infrastructure.Controllers;
 
@@ -7,17 +7,17 @@ namespace SRJBackend.Infrastructure.Controllers;
 [Route("api/document-types")]
 public class DocumentTypesController : ControllerBase
 {
-    private readonly GetDocumentTypesUseCase _getDocumentTypesUseCase;
+    private readonly ILookupQueries _lookupQueries;
 
-    public DocumentTypesController(GetDocumentTypesUseCase getDocumentTypesUseCase)
+    public DocumentTypesController(ILookupQueries lookupQueries)
     {
-        _getDocumentTypesUseCase = getDocumentTypesUseCase;
+        _lookupQueries = lookupQueries;
     }
 
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        var documentTypes = await _getDocumentTypesUseCase.ExecuteAsync();
+        var documentTypes = await _lookupQueries.GetDocumentTypesAsync();
         var total = documentTypes.Count;
         Response.Headers.Append("Content-Range", $"document-types 0-{(total == 0 ? 0 : total - 1)}/{total}");
         return Ok(documentTypes);

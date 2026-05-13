@@ -2,6 +2,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SRJBackend.Application.DTOs;
+using SRJBackend.Application.Interfaces;
 using SRJBackend.Application.UseCases;
 
 namespace SRJBackend.Infrastructure.Controllers;
@@ -10,21 +11,18 @@ namespace SRJBackend.Infrastructure.Controllers;
 [Route("api/grades")]
 public class GradesController : ControllerBase
 {
-    private readonly GetGradesUseCase _getGradesUseCase;
-    private readonly GetGradeByIdUseCase _getGradeByIdUseCase;
+    private readonly IGradeQueries _gradeQueries;
     private readonly CreateGradeUseCase _createGradeUseCase;
     private readonly UpdateGradeUseCase _updateGradeUseCase;
     private readonly DeleteGradeUseCase _deleteGradeUseCase;
 
     public GradesController(
-        GetGradesUseCase getGradesUseCase,
-        GetGradeByIdUseCase getGradeByIdUseCase,
+        IGradeQueries gradeQueries,
         CreateGradeUseCase createGradeUseCase,
         UpdateGradeUseCase updateGradeUseCase,
         DeleteGradeUseCase deleteGradeUseCase)
     {
-        _getGradesUseCase = getGradesUseCase;
-        _getGradeByIdUseCase = getGradeByIdUseCase;
+        _gradeQueries = gradeQueries;
         _createGradeUseCase = createGradeUseCase;
         _updateGradeUseCase = updateGradeUseCase;
         _deleteGradeUseCase = deleteGradeUseCase;
@@ -38,25 +36,21 @@ public class GradesController : ControllerBase
         if (filter != null)
         {
             filters = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(filter);
-            if (filters == null)
-                return BadRequest("Invalid filter");
+            if (filters == null) return BadRequest("Invalid filter");
         }
 
         int start = 0, take = int.MaxValue;
         if (range != null)
         {
             var bounds = JsonSerializer.Deserialize<int[]>(range)!;
-            if (bounds == null || bounds.Length != 2)
-                return BadRequest("Invalid range");
+            if (bounds == null || bounds.Length != 2) return BadRequest("Invalid range");
             start = bounds[0];
             take = bounds[1] - start + 1;
         }
 
-        var (grades, total) = await _getGradesUseCase.ExecuteAsync(start, take, filters);
+        var (grades, total) = await _gradeQueries.GetPagedAsync(start, take, filters);
         var rangeEnd = total == 0 ? 0 : start + grades.Count - 1;
         Response.Headers.Append("Content-Range", $"grades {start}-{rangeEnd}/{total}");
-        Console.WriteLine($"=== GET /api/grades | filter={filter ?? "none"} range={range ?? "none"} => {grades.Count}/{total} ===");
-        Console.WriteLine(JsonSerializer.Serialize(grades, new JsonSerializerOptions { WriteIndented = true }));
         return Ok(grades);
     }
 
@@ -64,9 +58,8 @@ public class GradesController : ControllerBase
     [Authorize(Policy = "grade.read")]
     public async Task<IActionResult> GetById(int id)
     {
-        var grade = await _getGradeByIdUseCase.ExecuteAsync(id);
+        var grade = await _gradeQueries.GetByIdAsync(id);
         if (grade == null) return NotFound();
-        Console.WriteLine(JsonSerializer.Serialize(grade, new JsonSerializerOptions { WriteIndented = true }));
         return Ok(grade);
     }
 
@@ -82,16 +75,9 @@ public class GradesController : ControllerBase
     [Authorize(Policy = "grade.update")]
     public async Task<IActionResult> Update(int id, [FromBody] CreateGradeDTO dto)
     {
-        try
-        {
-            await _updateGradeUseCase.ExecuteAsync(id, dto);
-            var updated = await _getGradeByIdUseCase.ExecuteAsync(id);
-            return Ok(updated);
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound();
-        }
+        await _updateGradeUseCase.ExecuteAsync(id, dto);
+        var updated = await _gradeQueries.GetByIdAsync(id);
+        return Ok(updated);
     }
 
     [HttpDelete("{id:int}")]

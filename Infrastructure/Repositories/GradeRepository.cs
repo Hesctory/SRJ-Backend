@@ -38,6 +38,15 @@ public class GradeRepository : IGradeRepository
                     .ToList();
                 query = query.Where(g => ids.Contains(g.Id));
             }
+
+            int? schoolYearId = filters.TryGetValue("schoolYearId", out var syEl) && syEl.TryGetInt32(out var sy) ? sy : null;
+
+            if (schoolYearId.HasValue)
+            {
+                query = query.Where(s => s.GradeOfferings.Any(gos =>
+                    (!schoolYearId.HasValue || gos.SchoolYearId == schoolYearId.Value)
+                ));
+            }            
         }
 
         var total = await query.CountAsync();

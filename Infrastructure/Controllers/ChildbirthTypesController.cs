@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using SRJBackend.Application.UseCases;
+using SRJBackend.Application.Interfaces;
 
 namespace SRJBackend.Infrastructure.Controllers;
 
@@ -7,17 +7,17 @@ namespace SRJBackend.Infrastructure.Controllers;
 [Route("api/childbirth-types")]
 public class ChildbirthTypesController : ControllerBase
 {
-    private readonly GetChildbirthTypesUseCase _getChildbirthTypesUseCase;
+    private readonly ILookupQueries _lookupQueries;
 
-    public ChildbirthTypesController(GetChildbirthTypesUseCase getChildbirthTypesUseCase)
+    public ChildbirthTypesController(ILookupQueries lookupQueries)
     {
-        _getChildbirthTypesUseCase = getChildbirthTypesUseCase;
+        _lookupQueries = lookupQueries;
     }
 
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        var childbirthTypes = await _getChildbirthTypesUseCase.ExecuteAsync();
+        var childbirthTypes = await _lookupQueries.GetChildbirthTypesAsync();
         var total = childbirthTypes.Count;
         Response.Headers.Append("Content-Range", $"childbirth-types 0-{(total == 0 ? 0 : total - 1)}/{total}");
         return Ok(childbirthTypes);

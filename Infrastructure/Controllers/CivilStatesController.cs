@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using SRJBackend.Application.UseCases;
+using SRJBackend.Application.Interfaces;
 
 namespace SRJBackend.Infrastructure.Controllers;
 
@@ -7,17 +7,17 @@ namespace SRJBackend.Infrastructure.Controllers;
 [Route("api/civil-states")]
 public class CivilStatesController : ControllerBase
 {
-    private readonly GetCivilStatesUseCase _getCivilStatesUseCase;
+    private readonly ILookupQueries _lookupQueries;
 
-    public CivilStatesController(GetCivilStatesUseCase getCivilStatesUseCase)
+    public CivilStatesController(ILookupQueries lookupQueries)
     {
-        _getCivilStatesUseCase = getCivilStatesUseCase;
+        _lookupQueries = lookupQueries;
     }
 
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        var civilStates = await _getCivilStatesUseCase.ExecuteAsync();
+        var civilStates = await _lookupQueries.GetCivilStatesAsync();
         var total = civilStates.Count;
         Response.Headers.Append("Content-Range", $"civil-states 0-{(total == 0 ? 0 : total - 1)}/{total}");
         return Ok(civilStates);

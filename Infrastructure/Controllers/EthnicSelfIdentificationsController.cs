@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using SRJBackend.Application.UseCases;
+using SRJBackend.Application.Interfaces;
 
 namespace SRJBackend.Infrastructure.Controllers;
 
@@ -7,17 +7,17 @@ namespace SRJBackend.Infrastructure.Controllers;
 [Route("api/ethnic-self-identifications")]
 public class EthnicSelfIdentificationsController : ControllerBase
 {
-    private readonly GetEthnicSelfIdentificationsUseCase _getEthnicSelfIdentificationsUseCase;
+    private readonly ILookupQueries _lookupQueries;
 
-    public EthnicSelfIdentificationsController(GetEthnicSelfIdentificationsUseCase getEthnicSelfIdentificationsUseCase)
+    public EthnicSelfIdentificationsController(ILookupQueries lookupQueries)
     {
-        _getEthnicSelfIdentificationsUseCase = getEthnicSelfIdentificationsUseCase;
+        _lookupQueries = lookupQueries;
     }
 
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        var ethnicSelfIdentifications = await _getEthnicSelfIdentificationsUseCase.ExecuteAsync();
+        var ethnicSelfIdentifications = await _lookupQueries.GetEthnicSelfIdentificationsAsync();
         var total = ethnicSelfIdentifications.Count;
         Response.Headers.Append("Content-Range", $"ethnic-self-identifications 0-{(total == 0 ? 0 : total - 1)}/{total}");
         return Ok(ethnicSelfIdentifications);

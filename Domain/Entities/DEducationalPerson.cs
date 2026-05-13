@@ -1,3 +1,5 @@
+using SRJBackend.Domain.ValueObjects;
+
 namespace SRJBackend.Domain.Entities;
 
 public class DEducationalPerson : DPerson
@@ -8,77 +10,46 @@ public class DEducationalPerson : DPerson
 
     public static DEducationalPerson Create(
         int id,
-        string names,
-        string paternalLastname,
-        string maternalLastname,
+        PersonalName name,
         int genderId,
         DateOnly birthDate,
-        int documentTypeId,
-        string idDocumentNumber,
+        IdentityDocument document,
         string address,
         int addressUbigeoId,
         int? religionId,
         int? civilStateId,
-        string? email,
-        string? landlinePhone,
-        string? cellPhone,
+        ContactInfo contact,
         int nativeLanguageId,
         int? ethnicSelfIdentificationId,
         List<int>? secondLanguageIds)
     {
-        DPerson.Create(id, names, paternalLastname, maternalLastname, genderId, birthDate,
-                       documentTypeId, idDocumentNumber, address, addressUbigeoId,
-                       religionId, civilStateId, email, landlinePhone, cellPhone);
+        DPerson.Create(id, name, genderId, birthDate, document, address, addressUbigeoId, religionId, civilStateId, contact);
 
         if (nativeLanguageId <= 0) throw new ArgumentException("Native language is required.", nameof(nativeLanguageId));
 
-        return new DEducationalPerson(id, names, paternalLastname, maternalLastname, genderId, birthDate,
-                                      documentTypeId, idDocumentNumber, address, addressUbigeoId,
-                                      religionId, civilStateId, email, landlinePhone, cellPhone,
-                                      nativeLanguageId, ethnicSelfIdentificationId, secondLanguageIds);
+        return new DEducationalPerson(id, name, genderId, birthDate, document, address, addressUbigeoId,
+                                      religionId, civilStateId, contact, nativeLanguageId,
+                                      ethnicSelfIdentificationId, secondLanguageIds);
     }
 
-    public DEducationalPerson(
+    protected DEducationalPerson(
         int id,
-        string names,
-        string paternalLastname,
-        string maternalLastname,
+        PersonalName name,
         int genderId,
         DateOnly birthDate,
-        int documentTypeId,
-        string idDocumentNumber,
+        IdentityDocument document,
         string address,
         int addressUbigeoId,
         int? religionId,
         int? civilStateId,
-        string? email,
-        string? landlinePhone,
-        string? cellPhone,
+        ContactInfo contact,
         int nativeLanguageId,
         int? ethnicSelfIdentificationId,
         List<int>? secondLanguageIds)
-        : base(id, names, paternalLastname, maternalLastname, genderId, birthDate,
-               documentTypeId, idDocumentNumber, address, addressUbigeoId,
-               religionId, civilStateId, email, landlinePhone, cellPhone)
+        : base(id, name, genderId, birthDate, document, address, addressUbigeoId, religionId, civilStateId, contact)
     {
         NativeLanguageId = nativeLanguageId;
         EthnicSelfIdentificationId = ethnicSelfIdentificationId;
         SecondLanguageIds = secondLanguageIds;
     }
 }
-
-/*
-    Forced Data:
-        string names,
-        string paternalLastname,
-        string maternalLastname,
-        int genderId,
-        DateOnly birthDate,
-        int documentTypeId,
-        string idDocumentNumber,
-        string address,
-        int addressUbigeoId,
-        int? religionId,
-        int? civilStateId,
-        int nativeLanguageId,
-*/

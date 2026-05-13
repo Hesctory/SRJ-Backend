@@ -1,5 +1,6 @@
 using SRJBackend.Application.DTOs;
 using SRJBackend.Domain.Entities;
+using SRJBackend.Domain.ValueObjects;
 
 namespace SRJBackend.Application.Mappers;
 
@@ -7,23 +8,22 @@ public static class StudentMapper
 {
     public static DStudent FromDTO(CreateStudentDTO dto, int id = 0)
     {
+        var name = new PersonalName(dto.Names, dto.PaternalLastname, dto.MaternalLastname);
+        var document = new IdentityDocument(dto.DocumentTypeId, dto.IdDocumentNumber);
+        var contact = new ContactInfo(dto.Email, dto.LandlinePhone, dto.CellPhone);
         var familiars = dto.Familiars.Select(FamiliarFromDTO).ToList();
-        return new DStudent(
+
+        return DStudent.Create(
             id: id,
-            names: dto.Names,
-            paternalLastname: dto.PaternalLastname,
-            maternalLastname: dto.MaternalLastname,
+            name: name,
             genderId: dto.GenderId,
             birthDate: dto.BirthDate,
-            documentTypeId: dto.DocumentTypeId,
-            idDocumentNumber: dto.IdDocumentNumber,
+            document: document,
             address: dto.Address ?? string.Empty,
             addressUbigeoId: dto.AddressLocation!.DistrictId,
             religionId: dto.ReligionId,
             civilStateId: dto.CivilStateId,
-            email: dto.Email,
-            landlinePhone: dto.LandlinePhone,
-            cellPhone: dto.CellPhone,
+            contact: contact,
             nativeLanguageId: dto.NativeLanguageId,
             ethnicSelfIdentificationId: dto.EthnicSelfIdentificationId,
             secondLanguageIds: dto.SecondLanguageIds,
@@ -40,23 +40,22 @@ public static class StudentMapper
 
     public static DStudent FromDTO(UpdateStudentDTO dto, int id = 0)
     {
+        var name = new PersonalName(dto.Names, dto.PaternalLastname, dto.MaternalLastname);
+        var document = new IdentityDocument(dto.DocumentTypeId, dto.IdDocumentNumber);
+        var contact = new ContactInfo(dto.Email, dto.LandlinePhone, dto.CellPhone);
         var familiars = dto.Familiars.Select(FamiliarFromDTO).ToList();
-        return new DStudent(
+
+        return DStudent.Create(
             id: id,
-            names: dto.Names,
-            paternalLastname: dto.PaternalLastname,
-            maternalLastname: dto.MaternalLastname,
+            name: name,
             genderId: dto.GenderId,
             birthDate: dto.BirthDate,
-            documentTypeId: dto.DocumentTypeId,
-            idDocumentNumber: dto.IdDocumentNumber,
+            document: document,
             address: dto.Address ?? string.Empty,
             addressUbigeoId: dto.AddressLocation!.DistrictId,
             religionId: dto.ReligionId,
             civilStateId: dto.CivilStateId,
-            email: dto.Email,
-            landlinePhone: dto.LandlinePhone,
-            cellPhone: dto.CellPhone,
+            contact: contact,
             nativeLanguageId: dto.NativeLanguageId,
             ethnicSelfIdentificationId: dto.EthnicSelfIdentificationId,
             secondLanguageIds: dto.SecondLanguageIds,
@@ -73,26 +72,24 @@ public static class StudentMapper
 
     public static DFamiliar FamiliarFromDTO(CreateFamiliarDTO dto)
     {
+        var name = new PersonalName(dto.Names, dto.PaternalLastname, dto.MaternalLastname);
+        var document = new IdentityDocument(dto.DocumentTypeId, dto.IdDocumentNumber);
+        var contact = new ContactInfo(dto.Email, dto.LandlinePhone, dto.CellPhone);
         var addressLocation = dto.AddressLocation != null
             ? new DLocation(dto.AddressLocation.DepartmentId, dto.AddressLocation.ProvinceId, dto.AddressLocation.DistrictId)
             : null;
 
-        return new DFamiliar(
+        return DFamiliar.Create(
             id: 0,
-            names: dto.Names,
-            paternalLastname: dto.PaternalLastname,
-            maternalLastname: dto.MaternalLastname,
+            name: name,
             genderId: dto.GenderId,
             birthDate: dto.BirthDate,
-            documentTypeId: dto.DocumentTypeId,
-            idDocumentNumber: dto.IdDocumentNumber,
+            document: document,
             address: dto.Address ?? string.Empty,
             addressUbigeoId: dto.AddressLocation?.DistrictId ?? 0,
             religionId: dto.ReligionId,
             civilStateId: dto.CivilStateId,
-            email: dto.Email,
-            landlinePhone: dto.LandlinePhone,
-            cellPhone: dto.CellPhone,
+            contact: contact,
             nativeLanguageId: dto.NativeLanguageId,
             ethnicSelfIdentificationId: dto.EthnicSelfIdentificationId,
             secondLanguageIds: dto.SecondLanguageIds,
@@ -109,22 +106,17 @@ public static class StudentMapper
 
     public static DPerson PersonFromFamiliar(DFamiliar familiar)
     {
-        return new DPerson(
+        return DPerson.Create(
             id: 0,
-            names: familiar.Names,
-            paternalLastname: familiar.PaternalLastname,
-            maternalLastname: familiar.MaternalLastname,
+            name: familiar.Name,
             genderId: familiar.GenderId,
             birthDate: familiar.BirthDate,
-            documentTypeId: familiar.DocumentTypeId,
-            idDocumentNumber: familiar.IdDocumentNumber,
+            document: familiar.Document,
             address: familiar.Address,
             addressUbigeoId: familiar.AddressLocation?.DistrictId ?? 0,
             religionId: familiar.ReligionId,
             civilStateId: familiar.CivilStateId,
-            email: familiar.Email,
-            landlinePhone: familiar.LandlinePhone,
-            cellPhone: familiar.CellPhone
+            contact: familiar.Contact
         );
     }
 }

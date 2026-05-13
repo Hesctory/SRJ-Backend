@@ -1,6 +1,6 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
-using SRJBackend.Application.UseCases;
+using SRJBackend.Application.Interfaces;
 
 namespace SRJBackend.Infrastructure.Controllers;
 
@@ -8,18 +8,17 @@ namespace SRJBackend.Infrastructure.Controllers;
 [Route("api/provinces")]
 public class ProvincesController : ControllerBase
 {
-    private readonly GetProvincesUseCase _getProvincesUseCase;
+    private readonly ILocationQueries _locationQueries;
 
-    public ProvincesController(GetProvincesUseCase getProvincesUseCase)
+    public ProvincesController(ILocationQueries locationQueries)
     {
-        _getProvincesUseCase = getProvincesUseCase;
+        _locationQueries = locationQueries;
     }
 
     [HttpGet]
     public async Task<IActionResult> GetAll([FromQuery] string? filter = null)
     {
         int? departmentId = null;
-
         if (!string.IsNullOrEmpty(filter))
         {
             var filterObj = JsonSerializer.Deserialize<JsonElement>(filter);
@@ -27,7 +26,7 @@ public class ProvincesController : ControllerBase
                 departmentId = val;
         }
 
-        var provinces = await _getProvincesUseCase.ExecuteAsync(departmentId);
+        var provinces = await _locationQueries.GetProvincesAsync(departmentId);
         var total = provinces.Count;
         Response.Headers.Append("Content-Range", $"provinces 0-{(total == 0 ? 0 : total - 1)}/{total}");
         return Ok(provinces);

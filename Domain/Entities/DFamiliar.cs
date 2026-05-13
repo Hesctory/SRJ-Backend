@@ -1,3 +1,5 @@
+using SRJBackend.Domain.ValueObjects;
+
 namespace SRJBackend.Domain.Entities;
 
 public class DFamiliar : DEducationalPerson
@@ -11,22 +13,17 @@ public class DFamiliar : DEducationalPerson
     public int RelationshipId { get; }
     public bool IsGuardian { get; }
 
-    public DFamiliar(
+    public static DFamiliar Create(
         int id,
-        string names,
-        string paternalLastname,
-        string maternalLastname,
+        PersonalName name,
         int genderId,
         DateOnly birthDate,
-        int documentTypeId,
-        string idDocumentNumber,
+        IdentityDocument document,
         string address,
         int addressUbigeoId,
         int? religionId,
         int? civilStateId,
-        string? email,
-        string? landlinePhone,
-        string? cellPhone,
+        ContactInfo contact,
         int nativeLanguageId,
         int? ethnicSelfIdentificationId,
         List<int>? secondLanguageIds,
@@ -38,10 +35,69 @@ public class DFamiliar : DEducationalPerson
         bool livesWithStudent,
         int relationshipId,
         bool isGuardian)
-        : base(id, names, paternalLastname, maternalLastname, genderId, birthDate,
-               documentTypeId, idDocumentNumber, address, addressUbigeoId,
-               religionId, civilStateId, email, landlinePhone, cellPhone,
-               nativeLanguageId, ethnicSelfIdentificationId, secondLanguageIds)
+    {
+        DPerson.Create(id, name, genderId, birthDate, document, address, addressUbigeoId, religionId, civilStateId, contact);
+
+        if (relationshipId <= 0)
+            throw new ArgumentException("Relationship type is required.", nameof(relationshipId));
+
+        return new DFamiliar(id, name, genderId, birthDate, document, address, addressUbigeoId,
+                             religionId, civilStateId, contact, nativeLanguageId, ethnicSelfIdentificationId,
+                             secondLanguageIds, levelOfEducationId, occupation, workCenter,
+                             addressLocation, lives, livesWithStudent, relationshipId, isGuardian);
+    }
+
+    internal static DFamiliar Reconstitute(
+        int id,
+        PersonalName name,
+        int genderId,
+        DateOnly birthDate,
+        IdentityDocument document,
+        string address,
+        int addressUbigeoId,
+        int? religionId,
+        int? civilStateId,
+        ContactInfo contact,
+        int nativeLanguageId,
+        int? ethnicSelfIdentificationId,
+        List<int>? secondLanguageIds,
+        int? levelOfEducationId,
+        string? occupation,
+        string? workCenter,
+        DLocation? addressLocation,
+        bool lives,
+        bool livesWithStudent,
+        int relationshipId,
+        bool isGuardian)
+        => new DFamiliar(id, name, genderId, birthDate, document, address, addressUbigeoId,
+                         religionId, civilStateId, contact, nativeLanguageId, ethnicSelfIdentificationId,
+                         secondLanguageIds, levelOfEducationId, occupation, workCenter,
+                         addressLocation, lives, livesWithStudent, relationshipId, isGuardian);
+
+    private DFamiliar(
+        int id,
+        PersonalName name,
+        int genderId,
+        DateOnly birthDate,
+        IdentityDocument document,
+        string address,
+        int addressUbigeoId,
+        int? religionId,
+        int? civilStateId,
+        ContactInfo contact,
+        int nativeLanguageId,
+        int? ethnicSelfIdentificationId,
+        List<int>? secondLanguageIds,
+        int? levelOfEducationId,
+        string? occupation,
+        string? workCenter,
+        DLocation? addressLocation,
+        bool lives,
+        bool livesWithStudent,
+        int relationshipId,
+        bool isGuardian)
+        : base(id, name, genderId, birthDate, document, address, addressUbigeoId,
+               religionId, civilStateId, contact, nativeLanguageId, ethnicSelfIdentificationId, secondLanguageIds)
     {
         LevelOfEducationId = levelOfEducationId;
         Occupation = occupation;

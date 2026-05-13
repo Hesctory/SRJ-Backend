@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using SRJBackend.Application.Interfaces;
 using SRJBackend.Domain.Entities;
+using SRJBackend.Domain.ValueObjects;
 using SRJBackend.Infrastructure.Models;
 
 namespace SRJBackend.Infrastructure.Repositories;
@@ -165,22 +166,17 @@ public class StudentRepository : IStudentRepository
             .Select(fsr => MapFamiliar(fsr))
             .ToList();
 
-        return new DStudent(
+        return DStudent.Reconstitute(
             id: s.EducationalPersonId,
-            names: person.Names,
-            paternalLastname: person.PaternalLastname,
-            maternalLastname: person.MaternalLastname,
+            name: new PersonalName(person.Names, person.PaternalLastname, person.MaternalLastname),
             genderId: person.GenderId,
             birthDate: person.BirthDate,
-            documentTypeId: person.DocumentTypeId,
-            idDocumentNumber: person.IdDocumentNumber,
+            document: new IdentityDocument(person.DocumentTypeId, person.IdDocumentNumber),
             address: person.Address,
             addressUbigeoId: person.AddressUbigeoId,
             religionId: person.ReligionId,
             civilStateId: person.CivilStateId,
-            email: person.Email,
-            landlinePhone: person.LandlinePhone,
-            cellPhone: person.CellPhone,
+            contact: new ContactInfo(person.Email, person.LandlinePhone, person.CellPhone),
             nativeLanguageId: ep.NativeLanguageId,
             ethnicSelfIdentificationId: ep.EthnicSelfIdentificationId,
             secondLanguageIds: secondLanguageIds,
@@ -214,22 +210,17 @@ public class StudentRepository : IStudentRepository
             ? ep.SecondLanguages.Select(l => l.Id).ToList()
             : null;
 
-        return new DFamiliar(
+        return DFamiliar.Reconstitute(
             id: person.Id,
-            names: person.Names,
-            paternalLastname: person.PaternalLastname,
-            maternalLastname: person.MaternalLastname,
+            name: new PersonalName(person.Names, person.PaternalLastname, person.MaternalLastname),
             genderId: person.GenderId,
             birthDate: person.BirthDate,
-            documentTypeId: person.DocumentTypeId,
-            idDocumentNumber: person.IdDocumentNumber,
+            document: new IdentityDocument(person.DocumentTypeId, person.IdDocumentNumber),
             address: person.Address,
             addressUbigeoId: person.AddressUbigeoId,
             religionId: person.ReligionId,
             civilStateId: person.CivilStateId,
-            email: person.Email,
-            landlinePhone: person.LandlinePhone,
-            cellPhone: person.CellPhone,
+            contact: new ContactInfo(person.Email, person.LandlinePhone, person.CellPhone),
             nativeLanguageId: ep.NativeLanguageId,
             ethnicSelfIdentificationId: ep.EthnicSelfIdentificationId,
             secondLanguageIds: secondLanguageIds,

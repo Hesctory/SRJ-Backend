@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using SRJBackend.Application.UseCases;
+using SRJBackend.Application.Interfaces;
 
 namespace SRJBackend.Infrastructure.Controllers;
 
@@ -7,17 +7,17 @@ namespace SRJBackend.Infrastructure.Controllers;
 [Route("api/languages")]
 public class LanguagesController : ControllerBase
 {
-    private readonly GetLanguagesUseCase _getLanguagesUseCase;
+    private readonly ILookupQueries _lookupQueries;
 
-    public LanguagesController(GetLanguagesUseCase getLanguagesUseCase)
+    public LanguagesController(ILookupQueries lookupQueries)
     {
-        _getLanguagesUseCase = getLanguagesUseCase;
+        _lookupQueries = lookupQueries;
     }
 
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        var languages = await _getLanguagesUseCase.ExecuteAsync();
+        var languages = await _lookupQueries.GetLanguagesAsync();
         var total = languages.Count;
         Response.Headers.Append("Content-Range", $"languages 0-{(total == 0 ? 0 : total - 1)}/{total}");
         return Ok(languages);

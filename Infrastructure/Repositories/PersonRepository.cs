@@ -26,20 +26,20 @@ public class PersonRepository : IPersonRepository
     {
         var person = new Person
         {
-            Names = domainPerson.Names,
-            PaternalLastname = domainPerson.PaternalLastname,
-            MaternalLastname = domainPerson.MaternalLastname,
+            Names = domainPerson.Name.Names,
+            PaternalLastname = domainPerson.Name.PaternalLastname,
+            MaternalLastname = domainPerson.Name.MaternalLastname,
             GenderId = domainPerson.GenderId,
             BirthDate = domainPerson.BirthDate,
-            DocumentTypeId = domainPerson.DocumentTypeId,
-            IdDocumentNumber = domainPerson.IdDocumentNumber,
+            DocumentTypeId = domainPerson.Document.DocumentTypeId,
+            IdDocumentNumber = domainPerson.Document.IdDocumentNumber,
             Address = domainPerson.Address,
             AddressUbigeoId = domainPerson.AddressUbigeoId,
             ReligionId = domainPerson.ReligionId,
             CivilStateId = domainPerson.CivilStateId,
-            Email = domainPerson.Email,
-            LandlinePhone = domainPerson.LandlinePhone,
-            CellPhone = domainPerson.CellPhone
+            Email = domainPerson.Contact.Email,
+            LandlinePhone = domainPerson.Contact.LandlinePhone,
+            CellPhone = domainPerson.Contact.CellPhone
         };
         _context.People.Add(person);
         await _context.SaveChangesAsync();
@@ -50,20 +50,20 @@ public class PersonRepository : IPersonRepository
     {
         var person = await _context.People.FindAsync(personId);
         if (person == null) return;
-        person.Names = domainPerson.Names;
-        person.PaternalLastname = domainPerson.PaternalLastname;
-        person.MaternalLastname = domainPerson.MaternalLastname;
+        person.Names = domainPerson.Name.Names;
+        person.PaternalLastname = domainPerson.Name.PaternalLastname;
+        person.MaternalLastname = domainPerson.Name.MaternalLastname;
         person.GenderId = domainPerson.GenderId;
         person.BirthDate = domainPerson.BirthDate;
-        person.DocumentTypeId = domainPerson.DocumentTypeId;
-        person.IdDocumentNumber = domainPerson.IdDocumentNumber;
+        person.DocumentTypeId = domainPerson.Document.DocumentTypeId;
+        person.IdDocumentNumber = domainPerson.Document.IdDocumentNumber;
         person.Address = domainPerson.Address;
         person.AddressUbigeoId = domainPerson.AddressUbigeoId;
         person.ReligionId = domainPerson.ReligionId;
         person.CivilStateId = domainPerson.CivilStateId;
-        person.Email = domainPerson.Email;
-        person.LandlinePhone = domainPerson.LandlinePhone;
-        person.CellPhone = domainPerson.CellPhone;
+        person.Email = domainPerson.Contact.Email;
+        person.LandlinePhone = domainPerson.Contact.LandlinePhone;
+        person.CellPhone = domainPerson.Contact.CellPhone;
         await _context.SaveChangesAsync();
     }
 
