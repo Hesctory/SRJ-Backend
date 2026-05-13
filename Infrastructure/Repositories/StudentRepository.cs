@@ -37,9 +37,9 @@ public class StudentRepository : IStudentRepository
         {
             EducationalPersonId = personId,
             BirthUbigeoId = student.BirthLocation.DistrictId,
-            HasDisability = student.HasDisability,
-            Siblings = student.Siblings,
-            ChildbirthTypeId = student.ChildbirthTypeId
+            HasDisability = student.Profile.HasDisability,
+            Siblings = student.Profile.Siblings,
+            ChildbirthTypeId = student.Profile.ChildbirthTypeId
         };
         _context.Students.Add(s);
         await _context.SaveChangesAsync();
@@ -50,8 +50,8 @@ public class StudentRepository : IStudentRepository
         var home = new StudentHome
         {
             StudentId = studentId,
-            HasElectronicDevices = student.HasElectronicDevices,
-            HasInternetAccess = student.HasInternetAccess
+            HasElectronicDevices = student.Profile.HasElectronicDevices,
+            HasInternetAccess = student.Profile.HasInternetAccess
         };
         _context.StudentHomes.Add(home);
         await _context.SaveChangesAsync();
@@ -62,9 +62,9 @@ public class StudentRepository : IStudentRepository
         var s = await _context.Students.FindAsync(student.Id);
         if (s == null) return;
         s.BirthUbigeoId = student.BirthLocation.DistrictId;
-        s.HasDisability = student.HasDisability;
-        s.Siblings = student.Siblings;
-        s.ChildbirthTypeId = student.ChildbirthTypeId;
+        s.HasDisability = student.Profile.HasDisability;
+        s.Siblings = student.Profile.Siblings;
+        s.ChildbirthTypeId = student.Profile.ChildbirthTypeId;
         await _context.SaveChangesAsync();
     }
 
@@ -72,8 +72,8 @@ public class StudentRepository : IStudentRepository
     {
         var home = await _context.StudentHomes.FirstOrDefaultAsync(h => h.StudentId == student.Id);
         if (home == null) return;
-        home.HasElectronicDevices = student.HasElectronicDevices;
-        home.HasInternetAccess = student.HasInternetAccess;
+        home.HasElectronicDevices = student.Profile.HasElectronicDevices;
+        home.HasInternetAccess = student.Profile.HasInternetAccess;
         await _context.SaveChangesAsync();
     }
 
@@ -162,6 +162,14 @@ public class StudentRepository : IStudentRepository
             ? ep.SecondLanguages.Select(l => l.Id).ToList()
             : null;
 
+        var demographics = new EducationalDemographics(ep.NativeLanguageId, ep.EthnicSelfIdentificationId, secondLanguageIds);
+        var profile = new StudentProfile(
+            s.StudentHome?.HasElectronicDevices ?? false,
+            s.StudentHome?.HasInternetAccess ?? false,
+            s.HasDisability,
+            s.Siblings,
+            s.ChildbirthTypeId);
+
         var familiars = s.FamiliarStudentRelationships
             .Select(fsr => MapFamiliar(fsr))
             .ToList();
@@ -177,16 +185,10 @@ public class StudentRepository : IStudentRepository
             religionId: person.ReligionId,
             civilStateId: person.CivilStateId,
             contact: new ContactInfo(person.Email, person.LandlinePhone, person.CellPhone),
-            nativeLanguageId: ep.NativeLanguageId,
-            ethnicSelfIdentificationId: ep.EthnicSelfIdentificationId,
-            secondLanguageIds: secondLanguageIds,
-            hasElectronicDevices: s.StudentHome?.HasElectronicDevices ?? false,
-            hasInternetAccess: s.StudentHome?.HasInternetAccess ?? false,
+            demographics: demographics,
+            profile: profile,
             birthLocation: birthLocation,
             addressLocation: addressLocation,
-            hasDisability: s.HasDisability,
-            siblings: s.Siblings,
-            childbirthTypeId: s.ChildbirthTypeId,
             familiars: familiars
         );
     }
@@ -210,6 +212,8 @@ public class StudentRepository : IStudentRepository
             ? ep.SecondLanguages.Select(l => l.Id).ToList()
             : null;
 
+        var demographics = new EducationalDemographics(ep.NativeLanguageId, ep.EthnicSelfIdentificationId, secondLanguageIds);
+
         return DFamiliar.Reconstitute(
             id: person.Id,
             name: new PersonalName(person.Names, person.PaternalLastname, person.MaternalLastname),
@@ -221,9 +225,7 @@ public class StudentRepository : IStudentRepository
             religionId: person.ReligionId,
             civilStateId: person.CivilStateId,
             contact: new ContactInfo(person.Email, person.LandlinePhone, person.CellPhone),
-            nativeLanguageId: ep.NativeLanguageId,
-            ethnicSelfIdentificationId: ep.EthnicSelfIdentificationId,
-            secondLanguageIds: secondLanguageIds,
+            demographics: demographics,
             levelOfEducationId: familiar.LevelOfEducationId,
             occupation: familiar.Occupation,
             workCenter: familiar.Workplace,

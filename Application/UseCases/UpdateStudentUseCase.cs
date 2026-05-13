@@ -35,11 +35,11 @@ public class UpdateStudentUseCase
         var student = StudentMapper.FromDTO(dto, id);
 
         await _personRepository.UpdateAsync(id, student);
-        await _educationalPersonRepository.UpdateAsync(id, student.NativeLanguageId, student.EthnicSelfIdentificationId);
+        await _educationalPersonRepository.UpdateAsync(id, student.Demographics.NativeLanguageId, student.Demographics.EthnicSelfIdentificationId);
 
         await _educationalPersonRepository.DeleteSecondLanguagesByEducationalPersonIdAsync(id);
-        if (student.SecondLanguageIds != null && student.SecondLanguageIds.Count > 0)
-            await _educationalPersonRepository.AddSecondLanguagesAsync(id, student.SecondLanguageIds);
+        if (student.Demographics.SecondLanguageIds != null && student.Demographics.SecondLanguageIds.Count > 0)
+            await _educationalPersonRepository.AddSecondLanguagesAsync(id, student.Demographics.SecondLanguageIds);
 
         await _studentRepository.UpdateAsync(student);
         await _studentRepository.UpdateHomeAsync(student);
@@ -59,19 +59,19 @@ public class UpdateStudentUseCase
         if (existingPersonId == null)
         {
             personId = await _personRepository.CreateAsync(familiar);
-            await _educationalPersonRepository.CreateAsync(personId, familiar.NativeLanguageId, familiar.EthnicSelfIdentificationId);
-            if (familiar.SecondLanguageIds?.Count > 0)
-                await _educationalPersonRepository.AddSecondLanguagesAsync(personId, familiar.SecondLanguageIds);
+            await _educationalPersonRepository.CreateAsync(personId, familiar.Demographics.NativeLanguageId, familiar.Demographics.EthnicSelfIdentificationId);
+            if (familiar.Demographics.SecondLanguageIds?.Count > 0)
+                await _educationalPersonRepository.AddSecondLanguagesAsync(personId, familiar.Demographics.SecondLanguageIds);
             await _familiarRepository.CreateAsync(familiar, personId);
         }
         else
         {
             personId = existingPersonId.Value;
             await _personRepository.UpdateAsync(personId, familiar);
-            await _educationalPersonRepository.UpdateAsync(personId, familiar.NativeLanguageId, familiar.EthnicSelfIdentificationId);
+            await _educationalPersonRepository.UpdateAsync(personId, familiar.Demographics.NativeLanguageId, familiar.Demographics.EthnicSelfIdentificationId);
             await _educationalPersonRepository.DeleteSecondLanguagesByEducationalPersonIdAsync(personId);
-            if (familiar.SecondLanguageIds?.Count > 0)
-                await _educationalPersonRepository.AddSecondLanguagesAsync(personId, familiar.SecondLanguageIds);
+            if (familiar.Demographics.SecondLanguageIds?.Count > 0)
+                await _educationalPersonRepository.AddSecondLanguagesAsync(personId, familiar.Demographics.SecondLanguageIds);
             if (!await _familiarRepository.ExistsByEducationalPersonIdAsync(personId))
                 await _familiarRepository.CreateAsync(familiar, personId);
             else

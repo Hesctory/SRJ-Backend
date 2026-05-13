@@ -11,6 +11,8 @@ public static class StudentMapper
         var name = new PersonalName(dto.Names, dto.PaternalLastname, dto.MaternalLastname);
         var document = new IdentityDocument(dto.DocumentTypeId, dto.IdDocumentNumber);
         var contact = new ContactInfo(dto.Email, dto.LandlinePhone, dto.CellPhone);
+        var demographics = new EducationalDemographics(dto.NativeLanguageId, dto.EthnicSelfIdentificationId, dto.SecondLanguageIds);
+        var profile = new StudentProfile(dto.HasElectronicDevices, dto.HasInternetAccess, dto.HasDisability, dto.Siblings, dto.ChildbirthTypeId);
         var familiars = dto.Familiars.Select(FamiliarFromDTO).ToList();
 
         return DStudent.Create(
@@ -24,16 +26,10 @@ public static class StudentMapper
             religionId: dto.ReligionId,
             civilStateId: dto.CivilStateId,
             contact: contact,
-            nativeLanguageId: dto.NativeLanguageId,
-            ethnicSelfIdentificationId: dto.EthnicSelfIdentificationId,
-            secondLanguageIds: dto.SecondLanguageIds,
-            hasElectronicDevices: dto.HasElectronicDevices,
-            hasInternetAccess: dto.HasInternetAccess,
+            demographics: demographics,
+            profile: profile,
             birthLocation: new DLocation(dto.BirthLocation.DepartmentId, dto.BirthLocation.ProvinceId, dto.BirthLocation.DistrictId),
             addressLocation: new DLocation(dto.AddressLocation.DepartmentId, dto.AddressLocation.ProvinceId, dto.AddressLocation.DistrictId),
-            hasDisability: dto.HasDisability,
-            siblings: dto.Siblings,
-            childbirthTypeId: dto.ChildbirthTypeId,
             familiars: familiars
         );
     }
@@ -43,6 +39,8 @@ public static class StudentMapper
         var name = new PersonalName(dto.Names, dto.PaternalLastname, dto.MaternalLastname);
         var document = new IdentityDocument(dto.DocumentTypeId, dto.IdDocumentNumber);
         var contact = new ContactInfo(dto.Email, dto.LandlinePhone, dto.CellPhone);
+        var demographics = new EducationalDemographics(dto.NativeLanguageId, dto.EthnicSelfIdentificationId, dto.SecondLanguageIds);
+        var profile = new StudentProfile(dto.HasElectronicDevices, dto.HasInternetAccess, dto.HasDisability, dto.Siblings, dto.ChildbirthTypeId);
         var familiars = dto.Familiars.Select(FamiliarFromDTO).ToList();
 
         return DStudent.Create(
@@ -56,16 +54,10 @@ public static class StudentMapper
             religionId: dto.ReligionId,
             civilStateId: dto.CivilStateId,
             contact: contact,
-            nativeLanguageId: dto.NativeLanguageId,
-            ethnicSelfIdentificationId: dto.EthnicSelfIdentificationId,
-            secondLanguageIds: dto.SecondLanguageIds,
-            hasElectronicDevices: dto.HasElectronicDevices,
-            hasInternetAccess: dto.HasInternetAccess,
+            demographics: demographics,
+            profile: profile,
             birthLocation: new DLocation(dto.BirthLocation.DepartmentId, dto.BirthLocation.ProvinceId, dto.BirthLocation.DistrictId),
             addressLocation: new DLocation(dto.AddressLocation.DepartmentId, dto.AddressLocation.ProvinceId, dto.AddressLocation.DistrictId),
-            hasDisability: dto.HasDisability,
-            siblings: dto.Siblings,
-            childbirthTypeId: dto.ChildbirthTypeId,
             familiars: familiars
         );
     }
@@ -75,6 +67,7 @@ public static class StudentMapper
         var name = new PersonalName(dto.Names, dto.PaternalLastname, dto.MaternalLastname);
         var document = new IdentityDocument(dto.DocumentTypeId, dto.IdDocumentNumber);
         var contact = new ContactInfo(dto.Email, dto.LandlinePhone, dto.CellPhone);
+        var demographics = new EducationalDemographics(dto.NativeLanguageId, dto.EthnicSelfIdentificationId, dto.SecondLanguageIds);
         var addressLocation = dto.AddressLocation != null
             ? new DLocation(dto.AddressLocation.DepartmentId, dto.AddressLocation.ProvinceId, dto.AddressLocation.DistrictId)
             : null;
@@ -90,9 +83,7 @@ public static class StudentMapper
             religionId: dto.ReligionId,
             civilStateId: dto.CivilStateId,
             contact: contact,
-            nativeLanguageId: dto.NativeLanguageId,
-            ethnicSelfIdentificationId: dto.EthnicSelfIdentificationId,
-            secondLanguageIds: dto.SecondLanguageIds,
+            demographics: demographics,
             levelOfEducationId: dto.LevelOfEducationId,
             occupation: dto.Occupation,
             workCenter: dto.WorkCenter,

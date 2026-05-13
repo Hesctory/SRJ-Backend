@@ -1,9 +1,11 @@
+using SRJBackend.Domain.Exceptions;
 using SRJBackend.Domain.ValueObjects;
 
 namespace SRJBackend.Domain.Entities;
 
-public class DFamiliar : DEducationalPerson
+public class DFamiliar : DPerson
 {
+    public EducationalDemographics Demographics { get; }
     public int? LevelOfEducationId { get; }
     public string? Occupation { get; }
     public string? WorkCenter { get; }
@@ -24,9 +26,7 @@ public class DFamiliar : DEducationalPerson
         int? religionId,
         int? civilStateId,
         ContactInfo contact,
-        int nativeLanguageId,
-        int? ethnicSelfIdentificationId,
-        List<int>? secondLanguageIds,
+        EducationalDemographics demographics,
         int? levelOfEducationId,
         string? occupation,
         string? workCenter,
@@ -41,10 +41,13 @@ public class DFamiliar : DEducationalPerson
         if (relationshipId <= 0)
             throw new ArgumentException("Relationship type is required.", nameof(relationshipId));
 
+        if (livesWithStudent && !lives)
+            throw new DomainException("Un familiar no puede convivir con el estudiante si no está vivo.");
+
         return new DFamiliar(id, name, genderId, birthDate, document, address, addressUbigeoId,
-                             religionId, civilStateId, contact, nativeLanguageId, ethnicSelfIdentificationId,
-                             secondLanguageIds, levelOfEducationId, occupation, workCenter,
-                             addressLocation, lives, livesWithStudent, relationshipId, isGuardian);
+                             religionId, civilStateId, contact, demographics, levelOfEducationId,
+                             occupation, workCenter, addressLocation, lives, livesWithStudent,
+                             relationshipId, isGuardian);
     }
 
     internal static DFamiliar Reconstitute(
@@ -58,9 +61,7 @@ public class DFamiliar : DEducationalPerson
         int? religionId,
         int? civilStateId,
         ContactInfo contact,
-        int nativeLanguageId,
-        int? ethnicSelfIdentificationId,
-        List<int>? secondLanguageIds,
+        EducationalDemographics demographics,
         int? levelOfEducationId,
         string? occupation,
         string? workCenter,
@@ -70,9 +71,9 @@ public class DFamiliar : DEducationalPerson
         int relationshipId,
         bool isGuardian)
         => new DFamiliar(id, name, genderId, birthDate, document, address, addressUbigeoId,
-                         religionId, civilStateId, contact, nativeLanguageId, ethnicSelfIdentificationId,
-                         secondLanguageIds, levelOfEducationId, occupation, workCenter,
-                         addressLocation, lives, livesWithStudent, relationshipId, isGuardian);
+                         religionId, civilStateId, contact, demographics, levelOfEducationId,
+                         occupation, workCenter, addressLocation, lives, livesWithStudent,
+                         relationshipId, isGuardian);
 
     private DFamiliar(
         int id,
@@ -85,9 +86,7 @@ public class DFamiliar : DEducationalPerson
         int? religionId,
         int? civilStateId,
         ContactInfo contact,
-        int nativeLanguageId,
-        int? ethnicSelfIdentificationId,
-        List<int>? secondLanguageIds,
+        EducationalDemographics demographics,
         int? levelOfEducationId,
         string? occupation,
         string? workCenter,
@@ -96,9 +95,9 @@ public class DFamiliar : DEducationalPerson
         bool livesWithStudent,
         int relationshipId,
         bool isGuardian)
-        : base(id, name, genderId, birthDate, document, address, addressUbigeoId,
-               religionId, civilStateId, contact, nativeLanguageId, ethnicSelfIdentificationId, secondLanguageIds)
+        : base(id, name, genderId, birthDate, document, address, addressUbigeoId, religionId, civilStateId, contact)
     {
+        Demographics = demographics;
         LevelOfEducationId = levelOfEducationId;
         Occupation = occupation;
         WorkCenter = workCenter;

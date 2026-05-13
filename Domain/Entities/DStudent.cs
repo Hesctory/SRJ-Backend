@@ -3,17 +3,14 @@ using SRJBackend.Domain.ValueObjects;
 
 namespace SRJBackend.Domain.Entities;
 
-public class DStudent : DEducationalPerson
+public class DStudent : DPerson
 {
     private const string GuardianRequired = "El estudiante debe tener al menos un familiar designado como tutor.";
 
-    public bool HasElectronicDevices { get; private set; }
-    public bool HasInternetAccess { get; private set; }
+    public EducationalDemographics Demographics { get; private set; }
+    public StudentProfile Profile { get; private set; }
     public DLocation BirthLocation { get; private set; }
     public DLocation AddressLocation { get; private set; }
-    public bool HasDisability { get; private set; }
-    public short? Siblings { get; private set; }
-    public int? ChildbirthTypeId { get; private set; }
     public List<DFamiliar> Familiars { get; private set; }
 
     public bool HasGuardian => Familiars.Any(f => f.IsGuardian);
@@ -30,16 +27,10 @@ public class DStudent : DEducationalPerson
         int? religionId,
         int? civilStateId,
         ContactInfo contact,
-        int nativeLanguageId,
-        int? ethnicSelfIdentificationId,
-        List<int>? secondLanguageIds,
-        bool hasElectronicDevices,
-        bool hasInternetAccess,
+        EducationalDemographics demographics,
+        StudentProfile profile,
         DLocation birthLocation,
         DLocation addressLocation,
-        bool hasDisability,
-        short? siblings,
-        int? childbirthTypeId,
         List<DFamiliar> familiars)
     {
         DPerson.Create(id, name, genderId, birthDate, document, address, addressUbigeoId, religionId, civilStateId, contact);
@@ -51,9 +42,8 @@ public class DStudent : DEducationalPerson
             throw new DomainException(GuardianRequired);
 
         return new DStudent(id, name, genderId, birthDate, document, address, addressUbigeoId,
-                            religionId, civilStateId, contact, nativeLanguageId, ethnicSelfIdentificationId,
-                            secondLanguageIds, hasElectronicDevices, hasInternetAccess, birthLocation,
-                            addressLocation, hasDisability, siblings, childbirthTypeId, familiars);
+                            religionId, civilStateId, contact, demographics, profile,
+                            birthLocation, addressLocation, familiars);
     }
 
     internal static DStudent Reconstitute(
@@ -67,21 +57,14 @@ public class DStudent : DEducationalPerson
         int? religionId,
         int? civilStateId,
         ContactInfo contact,
-        int nativeLanguageId,
-        int? ethnicSelfIdentificationId,
-        List<int>? secondLanguageIds,
-        bool hasElectronicDevices,
-        bool hasInternetAccess,
+        EducationalDemographics demographics,
+        StudentProfile profile,
         DLocation birthLocation,
         DLocation addressLocation,
-        bool hasDisability,
-        short? siblings,
-        int? childbirthTypeId,
         List<DFamiliar> familiars)
         => new DStudent(id, name, genderId, birthDate, document, address, addressUbigeoId,
-                        religionId, civilStateId, contact, nativeLanguageId, ethnicSelfIdentificationId,
-                        secondLanguageIds, hasElectronicDevices, hasInternetAccess, birthLocation,
-                        addressLocation, hasDisability, siblings, childbirthTypeId, familiars);
+                        religionId, civilStateId, contact, demographics, profile,
+                        birthLocation, addressLocation, familiars);
 
     public void UpdateFamiliars(List<DFamiliar> newFamiliars)
     {
@@ -101,27 +84,17 @@ public class DStudent : DEducationalPerson
         int? religionId,
         int? civilStateId,
         ContactInfo contact,
-        int nativeLanguageId,
-        int? ethnicSelfIdentificationId,
-        List<int>? secondLanguageIds,
-        bool hasElectronicDevices,
-        bool hasInternetAccess,
+        EducationalDemographics demographics,
+        StudentProfile profile,
         DLocation birthLocation,
         DLocation addressLocation,
-        bool hasDisability,
-        short? siblings,
-        int? childbirthTypeId,
         List<DFamiliar> familiars)
-        : base(id, name, genderId, birthDate, document, address, addressUbigeoId,
-               religionId, civilStateId, contact, nativeLanguageId, ethnicSelfIdentificationId, secondLanguageIds)
+        : base(id, name, genderId, birthDate, document, address, addressUbigeoId, religionId, civilStateId, contact)
     {
-        HasElectronicDevices = hasElectronicDevices;
-        HasInternetAccess = hasInternetAccess;
+        Demographics = demographics;
+        Profile = profile;
         BirthLocation = birthLocation;
         AddressLocation = addressLocation;
-        HasDisability = hasDisability;
-        Siblings = siblings;
-        ChildbirthTypeId = childbirthTypeId;
         Familiars = familiars;
     }
 }

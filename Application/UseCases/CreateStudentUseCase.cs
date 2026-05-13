@@ -55,10 +55,10 @@ public class CreateStudentUseCase
 
             var personId = await _personRepository.CreateAsync(student);
 
-            await _educationalPersonRepository.CreateAsync(personId, student.NativeLanguageId, student.EthnicSelfIdentificationId);
+            await _educationalPersonRepository.CreateAsync(personId, student.Demographics.NativeLanguageId, student.Demographics.EthnicSelfIdentificationId);
 
-            if (student.SecondLanguageIds != null && student.SecondLanguageIds.Count > 0)
-                await _educationalPersonRepository.AddSecondLanguagesAsync(personId, student.SecondLanguageIds);
+            if (student.Demographics.SecondLanguageIds != null && student.Demographics.SecondLanguageIds.Count > 0)
+                await _educationalPersonRepository.AddSecondLanguagesAsync(personId, student.Demographics.SecondLanguageIds);
 
             await _studentRepository.CreateAsync(student, personId);
             await _studentRepository.CreateHomeAsync(student, personId);
@@ -96,9 +96,9 @@ public class CreateStudentUseCase
         var epExists = await _educationalPersonRepository.ExistsByPersonIdAsync(personId);
         if (!epExists)
         {
-            await _educationalPersonRepository.CreateAsync(personId, familiar.NativeLanguageId, familiar.EthnicSelfIdentificationId);
-            if (familiar.SecondLanguageIds != null && familiar.SecondLanguageIds.Count > 0)
-                await _educationalPersonRepository.AddSecondLanguagesAsync(personId, familiar.SecondLanguageIds);
+            await _educationalPersonRepository.CreateAsync(personId, familiar.Demographics.NativeLanguageId, familiar.Demographics.EthnicSelfIdentificationId);
+            if (familiar.Demographics.SecondLanguageIds != null && familiar.Demographics.SecondLanguageIds.Count > 0)
+                await _educationalPersonRepository.AddSecondLanguagesAsync(personId, familiar.Demographics.SecondLanguageIds);
         }
 
         var familiarExists = await _familiarRepository.ExistsByEducationalPersonIdAsync(personId);
