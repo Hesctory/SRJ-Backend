@@ -69,6 +69,10 @@ public static class AuthorizationPoliciesExtension
                 policy.Requirements.Add(new PermissionRequirement("enrollment.create")));
             options.AddPolicy("enrollment.read", policy =>
                 policy.Requirements.Add(new PermissionRequirement("enrollment.read")));
+            options.AddPolicy("enrollment.update", policy =>
+                policy.Requirements.Add(new PermissionRequirement("enrollment.update")));
+            options.AddPolicy("enrollment.delete", policy =>
+                policy.Requirements.Add(new PermissionRequirement("enrollment.delete")));
 
             options.AddPolicy("section.read", policy =>
                 policy.Requirements.Add(new PermissionRequirement("section.read")));

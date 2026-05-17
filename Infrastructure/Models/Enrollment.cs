@@ -21,6 +21,8 @@ public partial class Enrollment
 
     public int SchoolYearId { get; set; }
 
+    public DateOnly? EnrollmentDate { get; set; }
+
     public virtual GradeOfferingShiftSection GradeOfferingShiftSection { get; set; } = null!;
 
     public virtual SchoolFeeConcept SchoolFeeConcept { get; set; } = null!;

@@ -1,5 +1,6 @@
 using SRJBackend.Application.DTOs;
 using SRJBackend.Application.Interfaces;
+using SRJBackend.Domain.Entities;
 
 namespace SRJBackend.Application.UseCases;
 
@@ -17,6 +18,7 @@ public class CreateSchoolYearUseCase
         if (await _schoolYearRepository.YearExistsAsync(dto.Year))
             throw new InvalidOperationException("Ya existe un año escolar registrado con ese año.");
 
-        return await _schoolYearRepository.CreateAsync(dto);
+        var schoolYear = DSchoolYear.Create(0, dto.Year, dto.StartDate, dto.EndDate, dto.IsActive ?? false);
+        return await _schoolYearRepository.CreateAsync(schoolYear);
     }
 }

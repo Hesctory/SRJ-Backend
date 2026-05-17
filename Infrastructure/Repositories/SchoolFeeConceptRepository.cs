@@ -14,27 +14,6 @@ public class SchoolFeeConceptRepository : ISchoolFeeConceptRepository
         _context = context;
     }
 
-    public async Task<(List<SchoolFeeConceptDTO> Items, int Total)> GetPagedAsync(int skip, int take)
-    {
-        var query = _context.SchoolFeeConcepts;
-        var total = await query.CountAsync();
-        var items = await query
-            .OrderBy(s => s.Id)
-            .Skip(skip)
-            .Take(take)
-            .Select(s => new SchoolFeeConceptDTO { id = s.Id, Name = s.Name })
-            .ToListAsync();
-        return (items, total);
-    }
-
-    public async Task<SchoolFeeConceptDTO?> GetByIdAsync(int id)
-    {
-        return await _context.SchoolFeeConcepts
-            .Where(s => s.Id == id)
-            .Select(s => new SchoolFeeConceptDTO { id = s.Id, Name = s.Name })
-            .FirstOrDefaultAsync();
-    }
-
     public async Task<bool> NameExistsAsync(string name, int? excludeId = null)
     {
         return await _context.SchoolFeeConcepts

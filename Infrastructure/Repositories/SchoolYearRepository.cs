@@ -1,7 +1,6 @@
-using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using SRJBackend.Application.DTOs;
 using SRJBackend.Application.Interfaces;
+using SRJBackend.Domain.Entities;
 using SRJBackend.Infrastructure.Models;
 
 namespace SRJBackend.Infrastructure.Repositories;
@@ -15,60 +14,6 @@ public class SchoolYearRepository : ISchoolYearRepository
         _context = context;
     }
 
-    public async Task<(List<SchoolYearDTO> Items, int Total)> GetPagedAsync(int skip, int take, Dictionary<string, JsonElement>? filters = null)
-    {
-        var query = _context.SchoolYears.AsQueryable();
-
-        if (filters != null)
-        {
-            if (filters.TryGetValue("id", out var idEl) && idEl.ValueKind == JsonValueKind.Array)
-            {
-                var ids = idEl.EnumerateArray()
-                    .Where(e => e.TryGetInt32(out _))
-                    .Select(e => e.GetInt32())
-                    .ToList();
-                query = query.Where(s => ids.Contains(s.Id));
-            }
-
-            if (filters.TryGetValue("year", out var yearEl) && yearEl.TryGetInt16(out var year))
-                query = query.Where(s => s.Year == year);
-
-            if (filters.TryGetValue("isActive", out var isActiveEl) && (isActiveEl.ValueKind == JsonValueKind.True || isActiveEl.ValueKind == JsonValueKind.False))
-                query = query.Where(s => s.IsActive == isActiveEl.GetBoolean());
-        }
-
-        var total = await query.CountAsync();
-        var items = await query
-            .OrderBy(s => s.Year)
-            .Skip(skip)
-            .Take(take)
-            .Select(s => new SchoolYearDTO
-            {
-                id = s.Id,
-                Year = s.Year,
-                StartDate = s.StartDate,
-                EndDate = s.EndDate,
-                IsActive = s.IsActive
-            })
-            .ToListAsync();
-        return (items, total);
-    }
-
-    public async Task<SchoolYearDTO?> GetByIdAsync(int id)
-    {
-        return await _context.SchoolYears
-            .Where(s => s.Id == id)
-            .Select(s => new SchoolYearDTO
-            {
-                id = s.Id,
-                Year = s.Year,
-                StartDate = s.StartDate,
-                EndDate = s.EndDate,
-                IsActive = s.IsActive
-            })
-            .FirstOrDefaultAsync();
-    }
-
     public async Task<bool> ExistsAsync(int id)
     {
         return await _context.SchoolYears.AnyAsync(s => s.Id == id);
@@ -80,27 +25,33 @@ public class SchoolYearRepository : ISchoolYearRepository
             .AnyAsync(s => s.Year == year && (excludeId == null || s.Id != excludeId));
     }
 
-    public async Task<int> CreateAsync(CreateSchoolYearDTO dto)
+    public async Task<DSchoolYear?> FindByIdAsync(int id)
     {
-        var schoolYear = new SchoolYear
-        {
-            Year = dto.Year,
-            StartDate = dto.StartDate,
-            EndDate = dto.EndDate,
-            IsActive = dto.IsActive
-        };
-        _context.SchoolYears.Add(schoolYear);
-        await _context.SaveChangesAsync();
-        return schoolYear.Id;
+        var sy = await _context.SchoolYears.FindAsync(id);
+        return sy == null ? null : DSchoolYear.Reconstitute(sy.Id, sy.Year, sy.StartDate, sy.EndDate, sy.IsActive == true);
     }
 
-    public async Task UpdateAsync(int id, CreateSchoolYearDTO dto)
+    public async Task<int> CreateAsync(DSchoolYear schoolYear)
     {
-        var schoolYear = await _context.SchoolYears.FindAsync(id);
-        schoolYear!.Year = dto.Year;
-        schoolYear.StartDate = dto.StartDate;
-        schoolYear.EndDate = dto.EndDate;
-        schoolYear.IsActive = dto.IsActive;
+        var entity = new SchoolYear
+        {
+            Year = schoolYear.Year,
+            StartDate = schoolYear.StartDate,
+            EndDate = schoolYear.EndDate,
+            IsActive = schoolYear.IsActive
+        };
+        _context.SchoolYears.Add(entity);
+        await _context.SaveChangesAsync();
+        return entity.Id;
+    }
+
+    public async Task UpdateAsync(DSchoolYear schoolYear)
+    {
+        var entity = await _context.SchoolYears.FindAsync(schoolYear.Id);
+        entity!.Year = schoolYear.Year;
+        entity.StartDate = schoolYear.StartDate;
+        entity.EndDate = schoolYear.EndDate;
+        entity.IsActive = schoolYear.IsActive;
         await _context.SaveChangesAsync();
     }
 

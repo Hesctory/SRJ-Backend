@@ -14,41 +14,64 @@ public class EnrollmentQueries : IEnrollmentQueries
         _context = context;
     }
 
-    public async Task<List<EnrollmentDTO>> GetByStudentAsync(int studentId)
+    public async Task<List<EnrollmentSummaryDTO>> GetByStudentAsync(int studentId)
     {
-        return await _context.Enrollments
-            .Where(e => e.StudentId == studentId)
-            .OrderBy(e => e.Id)
-            .Select(e => new EnrollmentDTO
+        return await (
+            from e in _context.Enrollments
+            where e.StudentId == studentId
+            join sy in _context.SchoolYears on e.SchoolYearId equals sy.Id
+            join s in _context.GradeOfferingShiftSections on e.GradeOfferingShiftSectionId equals s.Id
+            join gs in _context.GradeOfferingShifts on s.GradeOfferingShiftId equals gs.Id
+            join sh in _context.Shifts on gs.ShiftId equals sh.Id
+            join go in _context.GradeOfferings on gs.GradeOfferingId equals go.Id
+            join g in _context.Grades on go.GradeId equals g.Id
+            join l in _context.Levels on g.LevelId equals l.Id
+            orderby e.Id
+            select new EnrollmentSummaryDTO
             {
-                id = e.Id,
-                Code = e.Code,
-                CodeNumber = e.CodeNumber,
-                StudentId = e.StudentId!.Value,
-                GradeOfferingShiftSectionId = e.GradeOfferingShiftSectionId,
-                SchoolFeeConceptId = e.SchoolFeeConceptId,
-                SchoolYearId = e.SchoolYearId,
-                PreviousSchool = e.PreviousSchool
-            })
-            .ToListAsync();
+                Id = e.Id,
+                Year = sy.Year,
+                Level = l.Name,
+                Grade = g.Name,
+                Shift = sh.Name,
+                Section = s.Section
+            }
+        ).ToListAsync();
+    }
+
+    public async Task<EnrollmentDTO?> GetByIdAsync(int id)
+    {
+        return await RawQuery()
+            .Where(e => e.Id == id)
+            .FirstOrDefaultAsync();
     }
 
     public async Task<EnrollmentDTO?> GetLatestByStudentAsync(int studentId)
     {
-        return await _context.Enrollments
+        return await RawQuery()
             .Where(e => e.StudentId == studentId)
             .OrderByDescending(e => e.Id)
-            .Select(e => new EnrollmentDTO
-            {
-                id = e.Id,
-                Code = e.Code,
-                CodeNumber = e.CodeNumber,
-                StudentId = e.StudentId!.Value,
-                GradeOfferingShiftSectionId = e.GradeOfferingShiftSectionId,
-                SchoolFeeConceptId = e.SchoolFeeConceptId,
-                SchoolYearId = e.SchoolYearId,
-                PreviousSchool = e.PreviousSchool
-            })
             .FirstOrDefaultAsync();
     }
+
+    private IQueryable<EnrollmentDTO> RawQuery() =>
+        from e in _context.Enrollments
+        join s in _context.GradeOfferingShiftSections on e.GradeOfferingShiftSectionId equals s.Id
+        join gs in _context.GradeOfferingShifts on s.GradeOfferingShiftId equals gs.Id
+        join go in _context.GradeOfferings on gs.GradeOfferingId equals go.Id
+        join g in _context.Grades on go.GradeId equals g.Id
+        select new EnrollmentDTO
+        {
+            Id = e.Id,
+            Code = e.Code,
+            CodeNumber = e.CodeNumber,
+            StudentId = e.StudentId!.Value,
+            LevelId = g.LevelId,
+            GradeId = go.GradeId,
+            ShiftId = gs.ShiftId,
+            SectionId = s.Id,
+            SchoolFeeConceptId = e.SchoolFeeConceptId,
+            SchoolYearId = e.SchoolYearId,
+            PreviousSchool = e.PreviousSchool
+        };
 }

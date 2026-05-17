@@ -315,12 +315,17 @@ public partial class SRJDbContext : DbContext
 
             entity.ToTable("enrollment");
 
+            entity.HasIndex(e => new { e.StudentId, e.SchoolYearId }, "unique_student_per_school_year").IsUnique();
+
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Code)
                 .HasMaxLength(11)
                 .IsFixedLength()
                 .HasColumnName("code");
             entity.Property(e => e.CodeNumber).HasColumnName("code_number");
+            entity.Property(e => e.EnrollmentDate)
+                .HasDefaultValueSql("CURRENT_DATE")
+                .HasColumnName("enrollment_date");
             entity.Property(e => e.GradeOfferingShiftSectionId).HasColumnName("grade_offering_shift_section_id");
             entity.Property(e => e.PreviousSchool).HasColumnName("previous_school");
             entity.Property(e => e.SchoolFeeConceptId).HasColumnName("school_fee_concept_id");

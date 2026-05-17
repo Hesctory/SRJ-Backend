@@ -67,6 +67,19 @@ public class StudentsController : ControllerBase
         }
     }
 
+    [HttpGet("report")]
+    [Authorize(Policy = "student.read")]
+    public async Task<IActionResult> GetReport(
+        [FromQuery] int? schoolYearId = null,
+        [FromQuery] int? levelId = null,
+        [FromQuery] int? gradeId = null,
+        [FromQuery] int? shiftId = null,
+        [FromQuery] int? sectionId = null)
+    {
+        var items = await _studentQueries.GetReportAsync(schoolYearId, levelId, gradeId, shiftId, sectionId);
+        return Ok(items);
+    }
+
     [HttpGet("{id:int}")]
     [Authorize(Policy = "student.read")]
     public async Task<IActionResult> GetById(int id)

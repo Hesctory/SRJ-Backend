@@ -2,6 +2,7 @@ using SRJBackend.Application.DTOs;
 using SRJBackend.Application.Interfaces;
 using SRJBackend.Application.Mappers;
 using SRJBackend.Domain.Entities;
+using SRJBackend.Domain.ValueObjects;
 
 namespace SRJBackend.Application.UseCases;
 
@@ -12,6 +13,7 @@ public class CreateStudentUseCase
     private readonly IStudentRepository _studentRepository;
     private readonly IFamiliarRepository _familiarRepository;
     private readonly IEnrollmentRepository _enrollmentRepository;
+    private readonly IGradeOfferingShiftSectionRepository _sectionRepository;
     private readonly IUnitOfWork _unitOfWork;
 
     public CreateStudentUseCase(
@@ -20,6 +22,7 @@ public class CreateStudentUseCase
         IStudentRepository studentRepository,
         IFamiliarRepository familiarRepository,
         IEnrollmentRepository enrollmentRepository,
+        IGradeOfferingShiftSectionRepository sectionRepository,
         IUnitOfWork unitOfWork)
     {
         _personRepository = personRepository;
@@ -27,6 +30,7 @@ public class CreateStudentUseCase
         _studentRepository = studentRepository;
         _familiarRepository = familiarRepository;
         _enrollmentRepository = enrollmentRepository;
+        _sectionRepository = sectionRepository;
         _unitOfWork = unitOfWork;
     }
 
@@ -42,7 +46,7 @@ public class CreateStudentUseCase
         await EnsurePersonDoesNotExistAsync(dto.DocumentTypeId, dto.IdDocumentNumber);
 
         var enrollmentDto = dto.Enrollment;
-        var sectionId = await _enrollmentRepository.FindSectionIdAsync(
+        var sectionId = await _sectionRepository.FindValidSectionIdAsync(
             enrollmentDto.SchoolYearId, enrollmentDto.GradeId, enrollmentDto.ShiftId, enrollmentDto.SectionId);
 
         if (sectionId == null)
@@ -68,7 +72,8 @@ public class CreateStudentUseCase
                 var familiarPersonId = await ResolveFamiliarAsync(familiar);
                 await _familiarRepository.CreateRelationshipAsync(familiar, familiarPersonId, personId);
             }
-            await _enrollmentRepository.CreateAsync(personId, sectionId.Value, enrollmentDto.SchoolFeeConceptId, enrollmentDto.SchoolYearId, enrollmentDto.PreviousSchool);
+            var placement = new AcademicPlacement(enrollmentDto.LevelId, enrollmentDto.GradeId, enrollmentDto.ShiftId, sectionId.Value);
+            await _enrollmentRepository.CreateAsync(personId, placement, enrollmentDto.SchoolFeeConceptId, enrollmentDto.SchoolYearId, enrollmentDto.PreviousSchool);
 
             await _unitOfWork.CommitAsync();
             return personId;

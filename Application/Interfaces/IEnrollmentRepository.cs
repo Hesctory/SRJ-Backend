@@ -1,12 +1,15 @@
 using SRJBackend.Domain.Entities;
+using SRJBackend.Domain.ValueObjects;
 
 namespace SRJBackend.Application.Interfaces;
 
 public interface IEnrollmentRepository
 {
-    Task<int?> FindSectionIdAsync(int schoolYearId, int gradeId, int shiftId, int sectionId);
-    Task<DEnrollment> CreateAsync(int studentId, int sectionId, int schoolFeeConceptId, int schoolYearId, string? previousSchool = null);
+    Task<DEnrollment> CreateAsync(int studentId, AcademicPlacement placement, int schoolFeeConceptId, int schoolYearId, string? previousSchool = null);
+    Task<DEnrollment?> GetByIdAsync(int id);
     Task<List<DEnrollment>> GetByStudentIdAsync(int studentId);
     Task<DEnrollment?> GetLatestByStudentIdAsync(int studentId);
     Task<DEnrollment?> GetByStudentIdAndYearAsync(int studentId, int schoolYearId);
+    Task<DEnrollment> UpdateAsync(int id, AcademicPlacement placement, int schoolFeeConceptId, string? previousSchool);
+    Task<bool> DeleteAsync(int id);
 }

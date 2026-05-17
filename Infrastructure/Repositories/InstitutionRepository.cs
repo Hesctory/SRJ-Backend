@@ -14,39 +14,6 @@ public class InstitutionRepository : IInstitutionRepository
         _context = context;
     }
 
-    public async Task<(List<InstitutionDTO> Items, int Total)> GetPagedAsync(int skip, int take)
-    {
-        var query = _context.Institutions;
-        var total = await query.CountAsync();
-        var items = await query
-            .OrderBy(i => i.Id)
-            .Skip(skip)
-            .Take(take)
-            .Select(i => new InstitutionDTO
-            {
-                id = i.Id,
-                Name = i.Name,
-                Ruc = i.Ruc,
-                RucStateId = i.RucStateId
-            })
-            .ToListAsync();
-        return (items, total);
-    }
-
-    public async Task<InstitutionDTO?> GetByIdAsync(int id)
-    {
-        return await _context.Institutions
-            .Where(i => i.Id == id)
-            .Select(i => new InstitutionDTO
-            {
-                id = i.Id,
-                Name = i.Name,
-                Ruc = i.Ruc,
-                RucStateId = i.RucStateId
-            })
-            .FirstOrDefaultAsync();
-    }
-
     public async Task<bool> ExistsAsync(int id)
     {
         return await _context.Institutions.AnyAsync(i => i.Id == id);

@@ -14,37 +14,6 @@ public class LevelRepository : ILevelRepository
         _context = context;
     }
 
-    public async Task<(List<LevelDTO> Items, int Total)> GetPagedAsync(int skip, int take)
-    {
-        var query = _context.Levels;
-        var total = await query.CountAsync();
-        var items = await query
-            .OrderBy(l => l.OrderIndex)
-            .Skip(skip)
-            .Take(take)
-            .Select(l => new LevelDTO
-            {
-                id = l.Id,
-                Name = l.Name,
-                OrderIndex = l.OrderIndex
-            })
-            .ToListAsync();
-        return (items, total);
-    }
-
-    public async Task<LevelDTO?> GetByIdAsync(int id)
-    {
-        return await _context.Levels
-            .Where(l => l.Id == id)
-            .Select(l => new LevelDTO
-            {
-                id = l.Id,
-                Name = l.Name,
-                OrderIndex = l.OrderIndex
-            })
-            .FirstOrDefaultAsync();
-    }
-
     public async Task<bool> ExistsAsync(int id)
     {
         return await _context.Levels.AnyAsync(l => l.Id == id);

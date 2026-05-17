@@ -75,6 +75,43 @@ public class StudentQueries : IStudentQueries
         return s == null ? null : MapToDTO(s);
     }
 
+    public async Task<List<StudentReportItemDTO>> GetReportAsync(
+        int? schoolYearId, int? levelId, int? gradeId, int? shiftId, int? sectionId)
+    {
+        var query = _context.Enrollments
+            .AsNoTracking()
+            .Where(e => e.StudentId != null)
+            .AsQueryable();
+
+        if (schoolYearId.HasValue)
+            query = query.Where(e => e.SchoolYearId == schoolYearId.Value);
+        if (levelId.HasValue)
+            query = query.Where(e => e.GradeOfferingShiftSection.GradeOfferingShift.GradeOffering.Grade.LevelId == levelId.Value);
+        if (gradeId.HasValue)
+            query = query.Where(e => e.GradeOfferingShiftSection.GradeOfferingShift.GradeOffering.GradeId == gradeId.Value);
+        if (shiftId.HasValue)
+            query = query.Where(e => e.GradeOfferingShiftSection.GradeOfferingShift.ShiftId == shiftId.Value);
+        if (sectionId.HasValue)
+            query = query.Where(e => e.GradeOfferingShiftSectionId == sectionId.Value);
+
+        return await query
+            .Select(e => new StudentReportItemDTO
+            {
+                Id = e.Id,
+                EnrollmentCode = e.Code,
+                DocumentNumber = e.Student!.EducationalPerson.Person.IdDocumentNumber,
+                FullName = (e.Student!.EducationalPerson.Person.Names + " " +
+                            e.Student!.EducationalPerson.Person.PaternalLastname + " " +
+                            e.Student!.EducationalPerson.Person.MaternalLastname).Trim(),
+                GradeYear = e.GradeOfferingShiftSection.GradeOfferingShift.GradeOffering.Grade.Year,
+                Year = e.SchoolYear.Year,
+                Level = e.GradeOfferingShiftSection.GradeOfferingShift.GradeOffering.Grade.Level.Name,
+                Shift = e.GradeOfferingShiftSection.GradeOfferingShift.Shift.Name,
+                Section = e.GradeOfferingShiftSection.Section
+            })
+            .ToListAsync();
+    }
+
     private static StudentDetailDTO MapToDTO(Student s)
     {
         var person = s.EducationalPerson.Person;

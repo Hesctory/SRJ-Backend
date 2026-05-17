@@ -1,17 +1,17 @@
 using SRJBackend.Application.DTOs;
 using SRJBackend.Application.Interfaces;
-using SRJBackend.Domain.Entities;
+using SRJBackend.Application.Mappers;
 using SRJBackend.Domain.ValueObjects;
 
 namespace SRJBackend.Application.UseCases;
 
-public class CreateEnrollmentUseCase
+public class UpdateEnrollmentUseCase
 {
     private readonly IEnrollmentRepository _enrollmentRepository;
     private readonly IGradeOfferingShiftSectionRepository _sectionRepository;
     private readonly IUnitOfWork _unitOfWork;
 
-    public CreateEnrollmentUseCase(
+    public UpdateEnrollmentUseCase(
         IEnrollmentRepository enrollmentRepository,
         IGradeOfferingShiftSectionRepository sectionRepository,
         IUnitOfWork unitOfWork)
@@ -21,14 +21,13 @@ public class CreateEnrollmentUseCase
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<DEnrollment> ExecuteAsync(EnrollStudentDTO dto)
+    public async Task<EnrollmentDTO> ExecuteAsync(int id, UpdateEnrollmentDTO dto)
     {
-        var existing = await _enrollmentRepository.GetByStudentIdAndYearAsync(dto.StudentId, dto.SchoolYearId);
-        if (existing != null)
-            throw new InvalidOperationException("El estudiante ya tiene una matrícula en el año escolar indicado.");
+        var existing = await _enrollmentRepository.GetByIdAsync(id)
+            ?? throw new KeyNotFoundException("Matrícula no encontrada.");
 
         var sectionId = await _sectionRepository.FindValidSectionIdAsync(
-            dto.SchoolYearId, dto.GradeId, dto.ShiftId, dto.SectionId);
+            existing.SchoolYearId, dto.GradeId, dto.ShiftId, dto.SectionId);
 
         if (sectionId == null)
             throw new KeyNotFoundException("La sección indicada no existe o no corresponde al año escolar, grado y turno especificados.");
@@ -38,11 +37,9 @@ public class CreateEnrollmentUseCase
         await _unitOfWork.BeginAsync();
         try
         {
-            var enrollment = await _enrollmentRepository.CreateAsync(
-                dto.StudentId, placement, dto.SchoolFeeConceptId, dto.SchoolYearId, dto.PreviousSchool);
-
+            var updated = await _enrollmentRepository.UpdateAsync(id, placement, dto.SchoolFeeConceptId, dto.PreviousSchool);
             await _unitOfWork.CommitAsync();
-            return enrollment;
+            return EnrollmentMapper.ToDTO(updated);
         }
         catch
         {

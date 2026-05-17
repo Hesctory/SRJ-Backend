@@ -1,16 +1,11 @@
 namespace SRJBackend.Application.DTOs;
 
-public class EnrollmentDTO
+public class UpdateEnrollmentDTO
 {
-    public int Id { get; set; }
-    public string Code { get; set; } = null!;
-    public int CodeNumber { get; set; }
-    public int StudentId { get; set; }
     public int LevelId { get; set; }
     public int GradeId { get; set; }
     public int ShiftId { get; set; }
     public int SectionId { get; set; }
     public int SchoolFeeConceptId { get; set; }
-    public int SchoolYearId { get; set; }
     public string? PreviousSchool { get; set; }
 }
