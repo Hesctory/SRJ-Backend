@@ -97,6 +97,30 @@ public class StudentRepository : IStudentRepository
         }
     }
 
+    public async Task<bool> IsArchivedAsync(int id)
+    {
+        var student = await _context.Students.FindAsync(id);
+        return student?.IsArchived ?? false;
+    }
+
+    public async Task<bool> ArchiveAsync(int id)
+    {
+        var student = await _context.Students.FindAsync(id);
+        if (student == null) return false;
+        student.IsArchived = true;
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> UnarchiveAsync(int id)
+    {
+        var student = await _context.Students.FindAsync(id);
+        if (student == null) return false;
+        student.IsArchived = false;
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
     public async Task<bool> ExistsByEducationalPersonIdAsync(int educationalPersonId)
     {
         return await _context.Students

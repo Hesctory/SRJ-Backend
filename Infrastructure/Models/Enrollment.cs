@@ -13,7 +13,7 @@ public partial class Enrollment
 
     public int GradeOfferingShiftSectionId { get; set; }
 
-    public int? StudentId { get; set; }
+    public int StudentId { get; set; }
 
     public int SchoolFeeConceptId { get; set; }
 
@@ -23,11 +23,19 @@ public partial class Enrollment
 
     public DateOnly? EnrollmentDate { get; set; }
 
+    public int StateId { get; set; }
+
+    public bool Isnew { get; set; }
+
+    public virtual EnrollmentDebt? EnrollmentDebt { get; set; }
+
     public virtual GradeOfferingShiftSection GradeOfferingShiftSection { get; set; } = null!;
 
     public virtual SchoolFeeConcept SchoolFeeConcept { get; set; } = null!;
 
     public virtual SchoolYear SchoolYear { get; set; } = null!;
 
-    public virtual Student? Student { get; set; }
+    public virtual EnrollmentState State { get; set; } = null!;
+
+    public virtual Student Student { get; set; } = null!;
 }

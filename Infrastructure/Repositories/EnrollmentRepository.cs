@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using SRJBackend.Application.Interfaces;
+using SRJBackend.Domain.Constants;
 using SRJBackend.Domain.Entities;
 using SRJBackend.Domain.ValueObjects;
-
 using SRJBackend.Infrastructure.Models;
 
 namespace SRJBackend.Infrastructure.Repositories;
@@ -16,7 +16,7 @@ public class EnrollmentRepository : IEnrollmentRepository
         _context = context;
     }
 
-    public async Task<DEnrollment> CreateAsync(int studentId, AcademicPlacement placement, int schoolFeeConceptId, int schoolYearId, string? previousSchool = null)
+    public async Task<DEnrollment> CreateAsync(int studentId, AcademicPlacement placement, int schoolFeeConceptId, int schoolYearId, string? previousSchool = null, bool isNew = false)
     {
         await _context.Database.ExecuteSqlRawAsync("SELECT pg_advisory_xact_lock({0})", schoolYearId);
 
@@ -39,14 +39,16 @@ public class EnrollmentRepository : IEnrollmentRepository
             StudentId = domain.StudentId,
             SchoolFeeConceptId = domain.SchoolFeeConceptId,
             SchoolYearId = domain.SchoolYearId,
-            PreviousSchool = domain.PreviousSchool
+            PreviousSchool = domain.PreviousSchool,
+            Isnew = isNew
         };
 
         _context.Enrollments.Add(enrollment);
         await _context.SaveChangesAsync();
 
         return DEnrollment.Reconstitute(enrollment.Id, enrollmentCode, studentId, placement,
-            enrollment.SchoolFeeConceptId, enrollment.SchoolYearId, enrollment.PreviousSchool);
+            enrollment.SchoolFeeConceptId, enrollment.SchoolYearId, enrollment.PreviousSchool,
+            EnrollmentStatus.Active);
     }
 
     public async Task<List<DEnrollment>> GetByStudentIdAsync(int studentId)
@@ -118,13 +120,84 @@ public class EnrollmentRepository : IEnrollmentRepository
 
         var syModel = await _context.SchoolYears.FindAsync(enrollment.SchoolYearId)
             ?? throw new KeyNotFoundException("Año escolar no encontrado.");
-
         var schoolYear = DSchoolYear.Reconstitute(syModel.Id, syModel.Year, syModel.StartDate, syModel.EndDate, syModel.IsActive == true);
 
         var domain = await GetByIdAsync(id) ?? throw new KeyNotFoundException("Matrícula no encontrada.");
-        domain.ValidateCanDelete(schoolYear);
+        domain.Cancel(schoolYear);
 
         _context.Enrollments.Remove(enrollment);
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> CancelAsync(int id)
+    {
+        var enrollment = await _context.Enrollments.FindAsync(id);
+        if (enrollment == null) return false;
+
+        var syModel = await _context.SchoolYears.FindAsync(enrollment.SchoolYearId)
+            ?? throw new KeyNotFoundException("Año escolar no encontrado.");
+        var schoolYear = DSchoolYear.Reconstitute(syModel.Id, syModel.Year, syModel.StartDate, syModel.EndDate, syModel.IsActive == true);
+
+        var domain = await GetByIdAsync(id) ?? throw new KeyNotFoundException("Matrícula no encontrada.");
+        domain.Cancel(schoolYear);
+
+        var cancelledStateId = await _context.EnrollmentStates
+            .Where(s => s.Name == EnrollmentStateNames.Cancelled)
+            .Select(s => s.Id)
+            .FirstOrDefaultAsync();
+        if (cancelledStateId == 0)
+            throw new KeyNotFoundException("Estado 'Cancelada' no encontrado en la base de datos.");
+
+        enrollment.StateId = cancelledStateId;
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> WithdrawAsync(int id)
+    {
+        var enrollment = await _context.Enrollments.FindAsync(id);
+        if (enrollment == null) return false;
+
+        var syModel = await _context.SchoolYears.FindAsync(enrollment.SchoolYearId)
+            ?? throw new KeyNotFoundException("Año escolar no encontrado.");
+        var schoolYear = DSchoolYear.Reconstitute(syModel.Id, syModel.Year, syModel.StartDate, syModel.EndDate, syModel.IsActive == true);
+
+        var domain = await GetByIdAsync(id) ?? throw new KeyNotFoundException("Matrícula no encontrada.");
+        domain.Withdraw(schoolYear);
+
+        var withdrawnStateId = await _context.EnrollmentStates
+            .Where(s => s.Name == EnrollmentStateNames.Withdrawn)
+            .Select(s => s.Id)
+            .FirstOrDefaultAsync();
+        if (withdrawnStateId == 0)
+            throw new KeyNotFoundException("Estado 'Retirada' no encontrado en la base de datos.");
+
+        enrollment.StateId = withdrawnStateId;
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> ReactivateAsync(int id)
+    {
+        var enrollment = await _context.Enrollments.FindAsync(id);
+        if (enrollment == null) return false;
+
+        var syModel = await _context.SchoolYears.FindAsync(enrollment.SchoolYearId)
+            ?? throw new KeyNotFoundException("Año escolar no encontrado.");
+        var schoolYear = DSchoolYear.Reconstitute(syModel.Id, syModel.Year, syModel.StartDate, syModel.EndDate, syModel.IsActive == true);
+
+        var domain = await GetByIdAsync(id) ?? throw new KeyNotFoundException("Matrícula no encontrada.");
+        domain.Reactivate(schoolYear);
+
+        var activeStateId = await _context.EnrollmentStates
+            .Where(s => s.Name == EnrollmentStateNames.Active)
+            .Select(s => s.Id)
+            .FirstOrDefaultAsync();
+        if (activeStateId == 0)
+            throw new KeyNotFoundException("Estado 'Activa' no encontrado en la base de datos.");
+
+        enrollment.StateId = activeStateId;
         await _context.SaveChangesAsync();
         return true;
     }
@@ -135,19 +208,21 @@ public class EnrollmentRepository : IEnrollmentRepository
         join gs in _context.GradeOfferingShifts on s.GradeOfferingShiftId equals gs.Id
         join go in _context.GradeOfferings on gs.GradeOfferingId equals go.Id
         join g in _context.Grades on go.GradeId equals g.Id
+        join st in _context.EnrollmentStates on e.StateId equals st.Id
         select new EnrollmentRow
         {
             Id = e.Id,
             Code = e.Code,
             CodeNumber = e.CodeNumber,
-            StudentId = e.StudentId!.Value,
+            StudentId = e.StudentId,
             LevelId = g.LevelId,
             GradeId = go.GradeId,
             ShiftId = gs.ShiftId,
             SectionId = s.Id,
             SchoolFeeConceptId = e.SchoolFeeConceptId,
             SchoolYearId = e.SchoolYearId,
-            PreviousSchool = e.PreviousSchool
+            PreviousSchool = e.PreviousSchool,
+            StateName = st.Name ?? string.Empty
         };
 
     private static DEnrollment ToDomain(EnrollmentRow r) =>
@@ -158,7 +233,14 @@ public class EnrollmentRepository : IEnrollmentRepository
             new AcademicPlacement(r.LevelId, r.GradeId, r.ShiftId, r.SectionId),
             r.SchoolFeeConceptId,
             r.SchoolYearId,
-            r.PreviousSchool);
+            r.PreviousSchool,
+            r.StateName switch
+            {
+                EnrollmentStateNames.Cancelled  => EnrollmentStatus.Cancelled,
+                EnrollmentStateNames.Withdrawn  => EnrollmentStatus.Withdrawn,
+                EnrollmentStateNames.Finalized  => EnrollmentStatus.Finalized,
+                _                               => EnrollmentStatus.Active
+            });
 
     private class EnrollmentRow
     {
@@ -173,5 +255,6 @@ public class EnrollmentRepository : IEnrollmentRepository
         public int SchoolFeeConceptId { get; set; }
         public int SchoolYearId { get; set; }
         public string? PreviousSchool { get; set; }
+        public string StateName { get; set; } = null!;
     }
 }

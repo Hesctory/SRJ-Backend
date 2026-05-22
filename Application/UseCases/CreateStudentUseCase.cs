@@ -73,7 +73,7 @@ public class CreateStudentUseCase
                 await _familiarRepository.CreateRelationshipAsync(familiar, familiarPersonId, personId);
             }
             var placement = new AcademicPlacement(enrollmentDto.LevelId, enrollmentDto.GradeId, enrollmentDto.ShiftId, sectionId.Value);
-            await _enrollmentRepository.CreateAsync(personId, placement, enrollmentDto.SchoolFeeConceptId, enrollmentDto.SchoolYearId, enrollmentDto.PreviousSchool);
+            await _enrollmentRepository.CreateAsync(personId, placement, enrollmentDto.SchoolFeeConceptId, enrollmentDto.SchoolYearId, enrollmentDto.PreviousSchool, isNew: true);
 
             await _unitOfWork.CommitAsync();
             return personId;

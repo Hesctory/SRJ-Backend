@@ -41,7 +41,11 @@ public class StudentsController : ControllerBase
             studentFilter = new StudentFilter(
                 SchoolYearId: f.TryGetValue("schoolYearId", out var syEl) && syEl.TryGetInt32(out var syId) ? syId : null,
                 FullName: f.TryGetValue("fullName", out var nameEl) ? nameEl.GetString() : null,
-                Dni: f.TryGetValue("dni", out var dniEl) ? dniEl.GetString() : null
+                Dni: f.TryGetValue("dni", out var dniEl) ? dniEl.GetString() : null,
+                LevelId: f.TryGetValue("levelId", out var lvlEl) && lvlEl.TryGetInt32(out var lvlId) ? lvlId : null,
+                GradeId: f.TryGetValue("gradeId", out var gradeEl) && gradeEl.TryGetInt32(out var gradeId) ? gradeId : null,
+                ShiftId: f.TryGetValue("shiftId", out var shiftEl) && shiftEl.TryGetInt32(out var shiftId) ? shiftId : null,
+                SectionId: f.TryGetValue("sectionId", out var sectionEl) && sectionEl.TryGetInt32(out var sectionId) ? sectionId : null
             );
         }
 

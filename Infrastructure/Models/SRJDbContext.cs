@@ -17,9 +17,13 @@ public partial class SRJDbContext : DbContext
 
     public virtual DbSet<AuditLog> AuditLogs { get; set; }
 
+    public virtual DbSet<ChargeType> ChargeTypes { get; set; }
+
     public virtual DbSet<ChildbirthType> ChildbirthTypes { get; set; }
 
     public virtual DbSet<CivilState> CivilStates { get; set; }
+
+    public virtual DbSet<DebtStatus> DebtStatuses { get; set; }
 
     public virtual DbSet<Department> Departments { get; set; }
 
@@ -36,6 +40,10 @@ public partial class SRJDbContext : DbContext
     public virtual DbSet<EducationalPerson> EducationalPeople { get; set; }
 
     public virtual DbSet<Enrollment> Enrollments { get; set; }
+
+    public virtual DbSet<EnrollmentDebt> EnrollmentDebts { get; set; }
+
+    public virtual DbSet<EnrollmentState> EnrollmentStates { get; set; }
 
     public virtual DbSet<EthnicSelfIdentification> EthnicSelfIdentifications { get; set; }
 
@@ -65,6 +73,10 @@ public partial class SRJDbContext : DbContext
 
     public virtual DbSet<LevelOfEducation> LevelOfEducations { get; set; }
 
+    public virtual DbSet<Payment> Payments { get; set; }
+
+    public virtual DbSet<PaymentDebtAllocation> PaymentDebtAllocations { get; set; }
+
     public virtual DbSet<PaymentMethod> PaymentMethods { get; set; }
 
     public virtual DbSet<Permission> Permissions { get; set; }
@@ -85,19 +97,25 @@ public partial class SRJDbContext : DbContext
 
     public virtual DbSet<SchoolYear> SchoolYears { get; set; }
 
+    public virtual DbSet<SchoolYearMonth> SchoolYearMonths { get; set; }
+
     public virtual DbSet<Shift> Shifts { get; set; }
 
     public virtual DbSet<Student> Students { get; set; }
 
     public virtual DbSet<StudentHome> StudentHomes { get; set; }
 
-    public virtual DbSet<StudentState> StudentStates { get; set; }
+    public virtual DbSet<StudentSchoolYear> StudentSchoolYears { get; set; }
 
-    public virtual DbSet<StudentStatesByYear> StudentStatesByYears { get; set; }
+    public virtual DbSet<StudentSchoolYearState> StudentSchoolYearStates { get; set; }
 
     public virtual DbSet<Ubigeo> Ubigeos { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
+
+    public virtual DbSet<VOverdueDebt> VOverdueDebts { get; set; }
+
+    public virtual DbSet<VStudentBalance> VStudentBalances { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
@@ -123,6 +141,29 @@ public partial class SRJDbContext : DbContext
                 .HasColumnName("event_type");
         });
 
+        modelBuilder.Entity<ChargeType>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("charge_types_pkey");
+
+            entity.ToTable("charge_types");
+
+            entity.HasIndex(e => e.Code, "charge_types_code_key").IsUnique();
+
+            entity.Property(e => e.Id)
+                .UseIdentityAlwaysColumn()
+                .HasColumnName("id");
+            entity.Property(e => e.Code)
+                .HasMaxLength(20)
+                .HasColumnName("code");
+            entity.Property(e => e.Description).HasColumnName("description");
+            entity.Property(e => e.IsActive)
+                .HasDefaultValue(true)
+                .HasColumnName("is_active");
+            entity.Property(e => e.Name)
+                .HasMaxLength(100)
+                .HasColumnName("name");
+        });
+
         modelBuilder.Entity<ChildbirthType>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("childbirth_type_pkey");
@@ -146,6 +187,28 @@ public partial class SRJDbContext : DbContext
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Name)
                 .HasMaxLength(40)
+                .HasColumnName("name");
+        });
+
+        modelBuilder.Entity<DebtStatus>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("debt_statuses_pkey");
+
+            entity.ToTable("debt_statuses");
+
+            entity.HasIndex(e => e.Code, "debt_statuses_code_key").IsUnique();
+
+            entity.Property(e => e.Id)
+                .UseIdentityAlwaysColumn()
+                .HasColumnName("id");
+            entity.Property(e => e.Code)
+                .HasMaxLength(20)
+                .HasColumnName("code");
+            entity.Property(e => e.IsTerminal)
+                .HasDefaultValue(false)
+                .HasColumnName("is_terminal");
+            entity.Property(e => e.Name)
+                .HasMaxLength(100)
                 .HasColumnName("name");
         });
 
@@ -315,7 +378,7 @@ public partial class SRJDbContext : DbContext
 
             entity.ToTable("enrollment");
 
-            entity.HasIndex(e => new { e.StudentId, e.SchoolYearId }, "unique_student_per_school_year").IsUnique();
+            entity.HasIndex(e => new { e.StudentId, e.SchoolYearId, e.StateId }, "unique_student_year_state").IsUnique();
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Code)
@@ -327,9 +390,15 @@ public partial class SRJDbContext : DbContext
                 .HasDefaultValueSql("CURRENT_DATE")
                 .HasColumnName("enrollment_date");
             entity.Property(e => e.GradeOfferingShiftSectionId).HasColumnName("grade_offering_shift_section_id");
+            entity.Property(e => e.Isnew)
+                .HasDefaultValue(false)
+                .HasColumnName("isnew");
             entity.Property(e => e.PreviousSchool).HasColumnName("previous_school");
             entity.Property(e => e.SchoolFeeConceptId).HasColumnName("school_fee_concept_id");
             entity.Property(e => e.SchoolYearId).HasColumnName("school_year_id");
+            entity.Property(e => e.StateId)
+                .HasDefaultValue(1)
+                .HasColumnName("state_id");
             entity.Property(e => e.StudentId).HasColumnName("student_id");
 
             entity.HasOne(d => d.GradeOfferingShiftSection).WithMany(p => p.Enrollments)
@@ -347,9 +416,106 @@ public partial class SRJDbContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("enrollment_school_year_id_fkey");
 
+            entity.HasOne(d => d.State).WithMany(p => p.Enrollments)
+                .HasForeignKey(d => d.StateId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("enrollment_state_id_fkey");
+
             entity.HasOne(d => d.Student).WithMany(p => p.Enrollments)
                 .HasForeignKey(d => d.StudentId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("enrollment_student_id_fkey");
+        });
+
+        modelBuilder.Entity<EnrollmentDebt>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("student_debts_pkey");
+
+            entity.ToTable("enrollment_debts");
+
+            entity.HasIndex(e => e.ChargeTypeId, "idx_student_debts_charge_type");
+
+            entity.HasIndex(e => e.DueDate, "idx_student_debts_due_date");
+
+            entity.HasIndex(e => e.EnrollmentId, "idx_student_debts_enrollment_id");
+
+            entity.HasIndex(e => e.SchoolYearId, "idx_student_debts_school_year");
+
+            entity.HasIndex(e => e.StatusId, "idx_student_debts_status_id");
+
+            entity.HasIndex(e => e.StudentId, "idx_student_debts_student_id");
+
+            entity.HasIndex(e => e.EnrollmentId, "uq_debt_enrollment_fee")
+                .IsUnique()
+                .HasFilter("(charge_type_id = 2)");
+
+            entity.HasIndex(e => new { e.EnrollmentId, e.PeriodMonth }, "uq_debt_tuition_period")
+                .IsUnique()
+                .HasFilter("(charge_type_id = 3)");
+
+            entity.Property(e => e.Id)
+                .UseIdentityAlwaysColumn()
+                .HasColumnName("id");
+            entity.Property(e => e.Amount)
+                .HasPrecision(10, 2)
+                .HasColumnName("amount");
+            entity.Property(e => e.ChargeTypeId).HasColumnName("charge_type_id");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("created_at");
+            entity.Property(e => e.CreatedBy).HasColumnName("created_by");
+            entity.Property(e => e.Description).HasColumnName("description");
+            entity.Property(e => e.DueDate).HasColumnName("due_date");
+            entity.Property(e => e.EnrollmentId).HasColumnName("enrollment_id");
+            entity.Property(e => e.Notes).HasColumnName("notes");
+            entity.Property(e => e.PeriodMonth).HasColumnName("period_month");
+            entity.Property(e => e.SchoolYearId).HasColumnName("school_year_id");
+            entity.Property(e => e.StatusId).HasColumnName("status_id");
+            entity.Property(e => e.StudentId).HasColumnName("student_id");
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("updated_at");
+
+            entity.HasOne(d => d.ChargeType).WithMany(p => p.EnrollmentDebts)
+                .HasForeignKey(d => d.ChargeTypeId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("student_debts_charge_type_id_fkey");
+
+            entity.HasOne(d => d.CreatedByNavigation).WithMany(p => p.EnrollmentDebts)
+                .HasForeignKey(d => d.CreatedBy)
+                .HasConstraintName("student_debts_created_by_fkey");
+
+            entity.HasOne(d => d.Enrollment).WithOne(p => p.EnrollmentDebt)
+                .HasForeignKey<EnrollmentDebt>(d => d.EnrollmentId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("student_debts_enrollment_id_fkey");
+
+            entity.HasOne(d => d.SchoolYear).WithMany(p => p.EnrollmentDebts)
+                .HasForeignKey(d => d.SchoolYearId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("student_debts_school_year_id_fkey");
+
+            entity.HasOne(d => d.Status).WithMany(p => p.EnrollmentDebts)
+                .HasForeignKey(d => d.StatusId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("student_debts_status_id_fkey");
+
+            entity.HasOne(d => d.Student).WithMany(p => p.EnrollmentDebts)
+                .HasForeignKey(d => d.StudentId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("student_debts_student_id_fkey");
+        });
+
+        modelBuilder.Entity<EnrollmentState>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("enrollment_states_pkey");
+
+            entity.ToTable("enrollment_states");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Name)
+                .HasMaxLength(20)
+                .HasColumnName("name");
         });
 
         modelBuilder.Entity<EthnicSelfIdentification>(entity =>
@@ -621,6 +787,86 @@ public partial class SRJDbContext : DbContext
                 .HasColumnName("name");
         });
 
+        modelBuilder.Entity<Payment>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("payments_pkey");
+
+            entity.ToTable("payments");
+
+            entity.HasIndex(e => e.CreatedBy, "idx_payments_created_by");
+
+            entity.HasIndex(e => e.IsVoided, "idx_payments_voided").HasFilter("(is_voided = true)");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Amount)
+                .HasPrecision(10, 2)
+                .HasColumnName("amount");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("created_at");
+            entity.Property(e => e.CreatedBy).HasColumnName("created_by");
+            entity.Property(e => e.IsVoided)
+                .HasDefaultValue(false)
+                .HasColumnName("is_voided");
+            entity.Property(e => e.NOperation)
+                .HasMaxLength(20)
+                .HasColumnName("n_operation");
+            entity.Property(e => e.Notes).HasColumnName("notes");
+            entity.Property(e => e.PaymentDate).HasColumnName("payment_date");
+            entity.Property(e => e.PaymentMethodId).HasColumnName("payment_method_id");
+            entity.Property(e => e.VoidedAt).HasColumnName("voided_at");
+            entity.Property(e => e.VoidedBy).HasColumnName("voided_by");
+
+            entity.HasOne(d => d.CreatedByNavigation).WithMany(p => p.PaymentCreatedByNavigations)
+                .HasForeignKey(d => d.CreatedBy)
+                .HasConstraintName("payments_created_by_fkey");
+
+            entity.HasOne(d => d.PaymentMethod).WithMany(p => p.Payments)
+                .HasForeignKey(d => d.PaymentMethodId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("payments_payment_method_id_fkey");
+
+            entity.HasOne(d => d.VoidedByNavigation).WithMany(p => p.PaymentVoidedByNavigations)
+                .HasForeignKey(d => d.VoidedBy)
+                .HasConstraintName("payments_voided_by_fkey");
+        });
+
+        modelBuilder.Entity<PaymentDebtAllocation>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("payment_debt_allocations_pkey");
+
+            entity.ToTable("payment_debt_allocations");
+
+            entity.HasIndex(e => e.DebtId, "idx_alloc_debt_id");
+
+            entity.HasIndex(e => e.PaymentId, "idx_alloc_payment_id");
+
+            entity.HasIndex(e => new { e.PaymentId, e.DebtId }, "uq_allocation_payment_debt").IsUnique();
+
+            entity.Property(e => e.Id)
+                .UseIdentityAlwaysColumn()
+                .HasColumnName("id");
+            entity.Property(e => e.AllocatedAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("allocated_at");
+            entity.Property(e => e.AmountApplied)
+                .HasPrecision(10, 2)
+                .HasColumnName("amount_applied");
+            entity.Property(e => e.DebtId).HasColumnName("debt_id");
+            entity.Property(e => e.Notes).HasColumnName("notes");
+            entity.Property(e => e.PaymentId).HasColumnName("payment_id");
+
+            entity.HasOne(d => d.Debt).WithMany(p => p.PaymentDebtAllocations)
+                .HasForeignKey(d => d.DebtId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("payment_debt_allocations_debt_id_fkey");
+
+            entity.HasOne(d => d.Payment).WithMany(p => p.PaymentDebtAllocations)
+                .HasForeignKey(d => d.PaymentId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("payment_debt_allocations_payment_id_fkey");
+        });
+
         modelBuilder.Entity<PaymentMethod>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("payment_methods_pkey");
@@ -868,6 +1114,35 @@ public partial class SRJDbContext : DbContext
             entity.Property(e => e.Year).HasColumnName("year");
         });
 
+        modelBuilder.Entity<SchoolYearMonth>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("school_year_months_pkey");
+
+            entity.ToTable("school_year_months");
+
+            entity.HasIndex(e => e.BillingOpenDate, "idx_sym_billing_open_date");
+
+            entity.HasIndex(e => e.SchoolYearId, "idx_sym_school_year_id");
+
+            entity.HasIndex(e => new { e.SchoolYearId, e.Month }, "uq_school_year_month").IsUnique();
+
+            entity.Property(e => e.Id)
+                .UseIdentityAlwaysColumn()
+                .HasColumnName("id");
+            entity.Property(e => e.BillingOpenDate).HasColumnName("billing_open_date");
+            entity.Property(e => e.DueDate).HasColumnName("due_date");
+            entity.Property(e => e.IsActive)
+                .HasDefaultValue(true)
+                .HasColumnName("is_active");
+            entity.Property(e => e.Month).HasColumnName("month");
+            entity.Property(e => e.SchoolYearId).HasColumnName("school_year_id");
+
+            entity.HasOne(d => d.SchoolYear).WithMany(p => p.SchoolYearMonths)
+                .HasForeignKey(d => d.SchoolYearId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("school_year_months_school_year_id_fkey");
+        });
+
         modelBuilder.Entity<Shift>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("shifts_pkey");
@@ -891,9 +1166,18 @@ public partial class SRJDbContext : DbContext
             entity.Property(e => e.EducationalPersonId)
                 .ValueGeneratedNever()
                 .HasColumnName("educational_person_id");
+            entity.Property(e => e.BirthOrder)
+                .HasDefaultValue((short)1)
+                .HasColumnName("birth_order");
             entity.Property(e => e.BirthUbigeoId).HasColumnName("birth_ubigeo_id");
             entity.Property(e => e.ChildbirthTypeId).HasColumnName("childbirth_type_id");
             entity.Property(e => e.HasDisability).HasColumnName("has_disability");
+            entity.Property(e => e.IsActive)
+                .HasDefaultValue(true)
+                .HasColumnName("is_active");
+            entity.Property(e => e.IsArchived)
+                .HasDefaultValue(false)
+                .HasColumnName("is_archived");
             entity.Property(e => e.Siblings).HasColumnName("siblings");
 
             entity.HasOne(d => d.BirthUbigeo).WithMany(p => p.Students)
@@ -929,26 +1213,11 @@ public partial class SRJDbContext : DbContext
                 .HasConstraintName("student_homes_student_id_fkey");
         });
 
-        modelBuilder.Entity<StudentState>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("student_states_pkey");
-
-            entity.ToTable("student_states");
-
-            entity.HasIndex(e => e.Name, "student_states_name_key").IsUnique();
-
-            entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.Description).HasColumnName("description");
-            entity.Property(e => e.Name)
-                .HasMaxLength(40)
-                .HasColumnName("name");
-        });
-
-        modelBuilder.Entity<StudentStatesByYear>(entity =>
+        modelBuilder.Entity<StudentSchoolYear>(entity =>
         {
             entity
                 .HasNoKey()
-                .ToTable("student_states_by_year");
+                .ToTable("student_school_years");
 
             entity.Property(e => e.SchoolYearId).HasColumnName("school_year_id");
             entity.Property(e => e.StatusId).HasColumnName("status_id");
@@ -968,6 +1237,23 @@ public partial class SRJDbContext : DbContext
                 .HasForeignKey(d => d.StudentId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("student_states_by_year_student_id_fkey");
+        });
+
+        modelBuilder.Entity<StudentSchoolYearState>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("student_states_pkey");
+
+            entity.ToTable("student_school_year_states");
+
+            entity.HasIndex(e => e.Name, "student_states_name_key").IsUnique();
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("nextval('student_states_id_seq'::regclass)")
+                .HasColumnName("id");
+            entity.Property(e => e.Description).HasColumnName("description");
+            entity.Property(e => e.Name)
+                .HasMaxLength(40)
+                .HasColumnName("name");
         });
 
         modelBuilder.Entity<Ubigeo>(entity =>
@@ -1035,6 +1321,79 @@ public partial class SRJDbContext : DbContext
                         j.IndexerProperty<int>("UserId").HasColumnName("user_id");
                         j.IndexerProperty<int>("RoleId").HasColumnName("role_id");
                     });
+        });
+
+        modelBuilder.Entity<VOverdueDebt>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("v_overdue_debts");
+
+            entity.Property(e => e.AmountCharged)
+                .HasPrecision(10, 2)
+                .HasColumnName("amount_charged");
+            entity.Property(e => e.BalanceDue).HasColumnName("balance_due");
+            entity.Property(e => e.ChargeTypeCode)
+                .HasMaxLength(20)
+                .HasColumnName("charge_type_code");
+            entity.Property(e => e.ChargeTypeName)
+                .HasMaxLength(100)
+                .HasColumnName("charge_type_name");
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+            entity.Property(e => e.DaysOverdue).HasColumnName("days_overdue");
+            entity.Property(e => e.DebtId).HasColumnName("debt_id");
+            entity.Property(e => e.Description).HasColumnName("description");
+            entity.Property(e => e.DueDate).HasColumnName("due_date");
+            entity.Property(e => e.EnrollmentId).HasColumnName("enrollment_id");
+            entity.Property(e => e.Notes).HasColumnName("notes");
+            entity.Property(e => e.PeriodMonth).HasColumnName("period_month");
+            entity.Property(e => e.SchoolYear).HasColumnName("school_year");
+            entity.Property(e => e.SchoolYearId).HasColumnName("school_year_id");
+            entity.Property(e => e.StatusCode)
+                .HasMaxLength(20)
+                .HasColumnName("status_code");
+            entity.Property(e => e.StatusName)
+                .HasMaxLength(100)
+                .HasColumnName("status_name");
+            entity.Property(e => e.StudentId).HasColumnName("student_id");
+            entity.Property(e => e.TotalPaid).HasColumnName("total_paid");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+        });
+
+        modelBuilder.Entity<VStudentBalance>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("v_student_balances");
+
+            entity.Property(e => e.AmountCharged)
+                .HasPrecision(10, 2)
+                .HasColumnName("amount_charged");
+            entity.Property(e => e.BalanceDue).HasColumnName("balance_due");
+            entity.Property(e => e.ChargeTypeCode)
+                .HasMaxLength(20)
+                .HasColumnName("charge_type_code");
+            entity.Property(e => e.ChargeTypeName)
+                .HasMaxLength(100)
+                .HasColumnName("charge_type_name");
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+            entity.Property(e => e.DebtId).HasColumnName("debt_id");
+            entity.Property(e => e.Description).HasColumnName("description");
+            entity.Property(e => e.DueDate).HasColumnName("due_date");
+            entity.Property(e => e.EnrollmentId).HasColumnName("enrollment_id");
+            entity.Property(e => e.Notes).HasColumnName("notes");
+            entity.Property(e => e.PeriodMonth).HasColumnName("period_month");
+            entity.Property(e => e.SchoolYear).HasColumnName("school_year");
+            entity.Property(e => e.SchoolYearId).HasColumnName("school_year_id");
+            entity.Property(e => e.StatusCode)
+                .HasMaxLength(20)
+                .HasColumnName("status_code");
+            entity.Property(e => e.StatusName)
+                .HasMaxLength(100)
+                .HasColumnName("status_name");
+            entity.Property(e => e.StudentId).HasColumnName("student_id");
+            entity.Property(e => e.TotalPaid).HasColumnName("total_paid");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
         });
 
         OnModelCreatingPartial(modelBuilder);

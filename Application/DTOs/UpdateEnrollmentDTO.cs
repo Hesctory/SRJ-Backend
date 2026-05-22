@@ -8,4 +8,5 @@ public class UpdateEnrollmentDTO
     public int SectionId { get; set; }
     public int SchoolFeeConceptId { get; set; }
     public string? PreviousSchool { get; set; }
+    public string? StateName { get; set; }
 }

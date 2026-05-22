@@ -15,6 +15,12 @@ public partial class Student
 
     public int? ChildbirthTypeId { get; set; }
 
+    public bool IsActive { get; set; }
+
+    public short BirthOrder { get; set; }
+
+    public bool IsArchived { get; set; }
+
     public virtual Ubigeo BirthUbigeo { get; set; } = null!;
 
     public virtual ChildbirthType? ChildbirthType { get; set; }
@@ -22,6 +28,8 @@ public partial class Student
     public virtual Disability? Disability { get; set; }
 
     public virtual EducationalPerson EducationalPerson { get; set; } = null!;
+
+    public virtual ICollection<EnrollmentDebt> EnrollmentDebts { get; set; } = new List<EnrollmentDebt>();
 
     public virtual ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
 

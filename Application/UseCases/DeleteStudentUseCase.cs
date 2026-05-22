@@ -52,14 +52,14 @@ public class DeleteStudentUseCase
             await _studentHomeRepository.DeleteAsync(id);
 
         var studentDeleted = await _studentRepository.TryDeleteAsync(id);
-        if(!studentDeleted)
+        if (!studentDeleted)
             return false;
 
         await _educationalPersonRepository.DeleteSecondLanguagesByEducationalPersonIdAsync(id);
         var studentEpDeleted = await _educationalPersonRepository.TryDeleteAsync(id);
         if (!studentEpDeleted)
             return true;
-            
+
         await _personRepository.TryDeleteAsync(id);
 
         return true;

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using SRJBackend.Application.DTOs;
 using SRJBackend.Application.Interfaces;
+using SRJBackend.Domain.Constants;
 using SRJBackend.Infrastructure.Models;
 
 namespace SRJBackend.Infrastructure.Queries;
@@ -26,6 +27,7 @@ public class EnrollmentQueries : IEnrollmentQueries
             join go in _context.GradeOfferings on gs.GradeOfferingId equals go.Id
             join g in _context.Grades on go.GradeId equals g.Id
             join l in _context.Levels on g.LevelId equals l.Id
+            join st in _context.EnrollmentStates on e.StateId equals st.Id
             orderby e.Id
             select new EnrollmentSummaryDTO
             {
@@ -34,7 +36,8 @@ public class EnrollmentQueries : IEnrollmentQueries
                 Level = l.Name,
                 Grade = g.Name,
                 Shift = sh.Name,
-                Section = s.Section
+                Section = s.Section,
+                State = st.Name!
             }
         ).ToListAsync();
     }
@@ -54,6 +57,17 @@ public class EnrollmentQueries : IEnrollmentQueries
             .FirstOrDefaultAsync();
     }
 
+    public async Task<bool> HasValidEnrollmentsAsync(int studentId)
+    {
+        var validStateIds = await _context.EnrollmentStates
+            .Where(s => s.Name != EnrollmentStateNames.Cancelled)
+            .Select(s => s.Id)
+            .ToListAsync();
+
+        return await _context.Enrollments
+            .AnyAsync(e => e.StudentId == studentId && validStateIds.Contains(e.StateId));
+    }
+
     private IQueryable<EnrollmentDTO> RawQuery() =>
         from e in _context.Enrollments
         join s in _context.GradeOfferingShiftSections on e.GradeOfferingShiftSectionId equals s.Id
@@ -65,7 +79,7 @@ public class EnrollmentQueries : IEnrollmentQueries
             Id = e.Id,
             Code = e.Code,
             CodeNumber = e.CodeNumber,
-            StudentId = e.StudentId!.Value,
+            StudentId = e.StudentId,
             LevelId = g.LevelId,
             GradeId = go.GradeId,
             ShiftId = gs.ShiftId,

@@ -18,8 +18,14 @@ public class StudentQueries : IStudentQueries
     {
         var query = _context.Students.AsQueryable();
 
-        if (filter?.SchoolYearId.HasValue == true)
-            query = query.Where(s => s.Enrollments.Any(e => e.SchoolYearId == filter.SchoolYearId.Value));
+        if (filter?.SchoolYearId.HasValue == true || filter?.LevelId.HasValue == true ||
+            filter?.GradeId.HasValue == true || filter?.ShiftId.HasValue == true || filter?.SectionId.HasValue == true)
+            query = query.Where(s => s.Enrollments.Any(e =>
+                (!filter!.SchoolYearId.HasValue || e.SchoolYearId == filter.SchoolYearId.Value) &&
+                (!filter.LevelId.HasValue || e.GradeOfferingShiftSection.GradeOfferingShift.GradeOffering.Grade.LevelId == filter.LevelId.Value) &&
+                (!filter.GradeId.HasValue || e.GradeOfferingShiftSection.GradeOfferingShift.GradeOffering.GradeId == filter.GradeId.Value) &&
+                (!filter.ShiftId.HasValue || e.GradeOfferingShiftSection.GradeOfferingShift.ShiftId == filter.ShiftId.Value) &&
+                (!filter.SectionId.HasValue || e.GradeOfferingShiftSectionId == filter.SectionId.Value)));
 
         if (!string.IsNullOrWhiteSpace(filter?.FullName))
             query = query.Where(s =>

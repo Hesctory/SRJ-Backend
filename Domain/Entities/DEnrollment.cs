@@ -12,6 +12,7 @@ public class DEnrollment
     public int SchoolFeeConceptId { get; private set; }
     public int SchoolYearId { get; private set; }
     public string? PreviousSchool { get; private set; }
+    public EnrollmentStatus Status { get; private set; }
 
     public static DEnrollment Create(
         EnrollmentCode code,
@@ -28,7 +29,7 @@ public class DEnrollment
         if (!schoolYear.IsActive)
             throw new DomainException("No se puede matricular en un año escolar que no está activo.");
 
-        return new DEnrollment(0, code, studentId, placement, schoolFeeConceptId, schoolYear.Id, previousSchool);
+        return new DEnrollment(0, code, studentId, placement, schoolFeeConceptId, schoolYear.Id, previousSchool, EnrollmentStatus.Active);
     }
 
     public void Update(AcademicPlacement placement, int schoolFeeConceptId, DSchoolYear schoolYear, string? previousSchool)
@@ -43,10 +44,27 @@ public class DEnrollment
         PreviousSchool = previousSchool;
     }
 
-    public void ValidateCanDelete(DSchoolYear schoolYear)
+    public void Cancel(DSchoolYear schoolYear)
     {
         if (!schoolYear.IsActive)
-            throw new DomainException("No se puede eliminar una matrícula de un año escolar que no está activo.");
+            throw new DomainException("No se puede cancelar una matrícula de un año escolar que no está activo.");
+        Status = EnrollmentStatus.Cancelled;
+    }
+
+    public void Withdraw(DSchoolYear schoolYear)
+    {
+        if (!schoolYear.IsActive)
+            throw new DomainException("No se puede retirar una matrícula de un año escolar que no está activo.");
+        if (Status != EnrollmentStatus.Active)
+            throw new DomainException("Solo se puede retirar una matrícula activa.");
+        Status = EnrollmentStatus.Withdrawn;
+    }
+
+    public void Reactivate(DSchoolYear schoolYear)
+    {
+        if (!schoolYear.IsActive)
+            throw new DomainException("No se puede reactivar una matrícula de un año escolar que no está activo.");
+        Status = EnrollmentStatus.Active;
     }
 
     internal static DEnrollment Reconstitute(
@@ -56,8 +74,9 @@ public class DEnrollment
         AcademicPlacement placement,
         int schoolFeeConceptId,
         int schoolYearId,
-        string? previousSchool)
-        => new DEnrollment(id, code, studentId, placement, schoolFeeConceptId, schoolYearId, previousSchool);
+        string? previousSchool,
+        EnrollmentStatus status)
+        => new DEnrollment(id, code, studentId, placement, schoolFeeConceptId, schoolYearId, previousSchool, status);
 
     private DEnrollment(
         int id,
@@ -66,7 +85,8 @@ public class DEnrollment
         AcademicPlacement placement,
         int schoolFeeConceptId,
         int schoolYearId,
-        string? previousSchool)
+        string? previousSchool,
+        EnrollmentStatus status)
     {
         Id = id;
         Code = code;
@@ -75,5 +95,6 @@ public class DEnrollment
         SchoolFeeConceptId = schoolFeeConceptId;
         SchoolYearId = schoolYearId;
         PreviousSchool = previousSchool;
+        Status = status;
     }
 }

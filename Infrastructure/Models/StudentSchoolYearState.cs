@@ -3,11 +3,11 @@ using System.Collections.Generic;
 
 namespace SRJBackend.Infrastructure.Models;
 
-public partial class PaymentMethod
+public partial class StudentSchoolYearState
 {
     public int Id { get; set; }
 
     public string Name { get; set; } = null!;
 
-    public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
+    public string Description { get; set; } = null!;
 }

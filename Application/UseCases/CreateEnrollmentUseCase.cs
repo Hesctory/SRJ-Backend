@@ -8,15 +8,18 @@ namespace SRJBackend.Application.UseCases;
 public class CreateEnrollmentUseCase
 {
     private readonly IEnrollmentRepository _enrollmentRepository;
+    private readonly IEnrollmentQueries _enrollmentQueries;
     private readonly IGradeOfferingShiftSectionRepository _sectionRepository;
     private readonly IUnitOfWork _unitOfWork;
 
     public CreateEnrollmentUseCase(
         IEnrollmentRepository enrollmentRepository,
+        IEnrollmentQueries enrollmentQueries,
         IGradeOfferingShiftSectionRepository sectionRepository,
         IUnitOfWork unitOfWork)
     {
         _enrollmentRepository = enrollmentRepository;
+        _enrollmentQueries = enrollmentQueries;
         _sectionRepository = sectionRepository;
         _unitOfWork = unitOfWork;
     }
@@ -34,12 +37,13 @@ public class CreateEnrollmentUseCase
             throw new KeyNotFoundException("La sección indicada no existe o no corresponde al año escolar, grado y turno especificados.");
 
         var placement = new AcademicPlacement(dto.LevelId, dto.GradeId, dto.ShiftId, sectionId.Value);
+        var hasValid = await _enrollmentQueries.HasValidEnrollmentsAsync(dto.StudentId);
 
         await _unitOfWork.BeginAsync();
         try
         {
             var enrollment = await _enrollmentRepository.CreateAsync(
-                dto.StudentId, placement, dto.SchoolFeeConceptId, dto.SchoolYearId, dto.PreviousSchool);
+                dto.StudentId, placement, dto.SchoolFeeConceptId, dto.SchoolYearId, dto.PreviousSchool, isNew: !hasValid);
 
             await _unitOfWork.CommitAsync();
             return enrollment;

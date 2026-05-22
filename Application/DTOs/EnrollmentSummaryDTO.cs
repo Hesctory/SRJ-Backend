@@ -8,4 +8,5 @@ public class EnrollmentSummaryDTO
     public string Grade { get; set; } = null!;
     public string Shift { get; set; } = null!;
     public char? Section { get; set; }
+    public string State { get; set; } = null!;
 }

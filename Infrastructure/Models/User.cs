@@ -21,5 +21,11 @@ public partial class User
 
     public bool IsActive { get; set; }
 
+    public virtual ICollection<EnrollmentDebt> EnrollmentDebts { get; set; } = new List<EnrollmentDebt>();
+
+    public virtual ICollection<Payment> PaymentCreatedByNavigations { get; set; } = new List<Payment>();
+
+    public virtual ICollection<Payment> PaymentVoidedByNavigations { get; set; } = new List<Payment>();
+
     public virtual ICollection<Role> Roles { get; set; } = new List<Role>();
 }
