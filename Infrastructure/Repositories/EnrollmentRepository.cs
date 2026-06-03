@@ -113,93 +113,92 @@ public class EnrollmentRepository : IEnrollmentRepository
         return domain;
     }
 
-    public async Task<bool> DeleteAsync(int id)
-    {
-        var enrollment = await _context.Enrollments.FindAsync(id);
-        if (enrollment == null) return false;
-
-        var syModel = await _context.SchoolYears.FindAsync(enrollment.SchoolYearId)
-            ?? throw new KeyNotFoundException("Año escolar no encontrado.");
-        var schoolYear = DSchoolYear.Reconstitute(syModel.Id, syModel.Year, syModel.StartDate, syModel.EndDate, syModel.IsActive == true);
-
-        var domain = await GetByIdAsync(id) ?? throw new KeyNotFoundException("Matrícula no encontrada.");
-        domain.Cancel(schoolYear);
-
-        _context.Enrollments.Remove(enrollment);
-        await _context.SaveChangesAsync();
-        return true;
-    }
-
     public async Task<bool> CancelAsync(int id)
     {
-        var enrollment = await _context.Enrollments.FindAsync(id);
-        if (enrollment == null) return false;
+        var loaded = await LoadForStateTransitionAsync(id);
+        if (loaded == null) return false;
+        var (ef, domain, schoolYear) = loaded.Value;
 
-        var syModel = await _context.SchoolYears.FindAsync(enrollment.SchoolYearId)
-            ?? throw new KeyNotFoundException("Año escolar no encontrado.");
-        var schoolYear = DSchoolYear.Reconstitute(syModel.Id, syModel.Year, syModel.StartDate, syModel.EndDate, syModel.IsActive == true);
-
-        var domain = await GetByIdAsync(id) ?? throw new KeyNotFoundException("Matrícula no encontrada.");
         domain.Cancel(schoolYear);
-
-        var cancelledStateId = await _context.EnrollmentStates
-            .Where(s => s.Name == EnrollmentStateNames.Cancelled)
-            .Select(s => s.Id)
-            .FirstOrDefaultAsync();
-        if (cancelledStateId == 0)
-            throw new KeyNotFoundException("Estado 'Cancelada' no encontrado en la base de datos.");
-
-        enrollment.StateId = cancelledStateId;
+        ef.StateId = await GetStateIdAsync(EnrollmentStateNames.Cancelled);
         await _context.SaveChangesAsync();
         return true;
     }
 
     public async Task<bool> WithdrawAsync(int id)
     {
-        var enrollment = await _context.Enrollments.FindAsync(id);
-        if (enrollment == null) return false;
+        var loaded = await LoadForStateTransitionAsync(id);
+        if (loaded == null) return false;
+        var (ef, domain, schoolYear) = loaded.Value;
 
-        var syModel = await _context.SchoolYears.FindAsync(enrollment.SchoolYearId)
-            ?? throw new KeyNotFoundException("Año escolar no encontrado.");
-        var schoolYear = DSchoolYear.Reconstitute(syModel.Id, syModel.Year, syModel.StartDate, syModel.EndDate, syModel.IsActive == true);
-
-        var domain = await GetByIdAsync(id) ?? throw new KeyNotFoundException("Matrícula no encontrada.");
         domain.Withdraw(schoolYear);
-
-        var withdrawnStateId = await _context.EnrollmentStates
-            .Where(s => s.Name == EnrollmentStateNames.Withdrawn)
-            .Select(s => s.Id)
-            .FirstOrDefaultAsync();
-        if (withdrawnStateId == 0)
-            throw new KeyNotFoundException("Estado 'Retirada' no encontrado en la base de datos.");
-
-        enrollment.StateId = withdrawnStateId;
+        ef.StateId = await GetStateIdAsync(EnrollmentStateNames.Withdrawn);
         await _context.SaveChangesAsync();
         return true;
     }
 
     public async Task<bool> ReactivateAsync(int id)
     {
-        var enrollment = await _context.Enrollments.FindAsync(id);
-        if (enrollment == null) return false;
+        var loaded = await LoadForStateTransitionAsync(id);
+        if (loaded == null) return false;
+        var (ef, domain, schoolYear) = loaded.Value;
 
-        var syModel = await _context.SchoolYears.FindAsync(enrollment.SchoolYearId)
-            ?? throw new KeyNotFoundException("Año escolar no encontrado.");
-        var schoolYear = DSchoolYear.Reconstitute(syModel.Id, syModel.Year, syModel.StartDate, syModel.EndDate, syModel.IsActive == true);
-
-        var domain = await GetByIdAsync(id) ?? throw new KeyNotFoundException("Matrícula no encontrada.");
         domain.Reactivate(schoolYear);
-
-        var activeStateId = await _context.EnrollmentStates
-            .Where(s => s.Name == EnrollmentStateNames.Active)
-            .Select(s => s.Id)
-            .FirstOrDefaultAsync();
-        if (activeStateId == 0)
-            throw new KeyNotFoundException("Estado 'Activa' no encontrado en la base de datos.");
-
-        enrollment.StateId = activeStateId;
+        ef.StateId = await GetStateIdAsync(EnrollmentStateNames.Active);
         await _context.SaveChangesAsync();
         return true;
+    }
+
+    private async Task<(Enrollment EfModel, DEnrollment Domain, DSchoolYear SchoolYear)?> LoadForStateTransitionAsync(int id)
+    {
+        var row = await (
+            from e in _context.Enrollments
+            join sy in _context.SchoolYears on e.SchoolYearId equals sy.Id
+            join s in _context.GradeOfferingShiftSections on e.GradeOfferingShiftSectionId equals s.Id
+            join gs in _context.GradeOfferingShifts on s.GradeOfferingShiftId equals gs.Id
+            join go in _context.GradeOfferings on gs.GradeOfferingId equals go.Id
+            join g in _context.Grades on go.GradeId equals g.Id
+            join st in _context.EnrollmentStates on e.StateId equals st.Id
+            where e.Id == id
+            select new
+            {
+                EfModel = e,
+                SyId = sy.Id, SyYear = sy.Year, SyStart = sy.StartDate, SyEnd = sy.EndDate, SyActive = sy.IsActive,
+                LevelId = g.LevelId, GradeId = go.GradeId, ShiftId = gs.ShiftId, SectionId = s.Id,
+                StateName = st.Name ?? string.Empty
+            }
+        ).FirstOrDefaultAsync();
+
+        if (row == null) return null;
+
+        var schoolYear = DSchoolYear.Reconstitute(row.SyId, row.SyYear, row.SyStart, row.SyEnd, row.SyActive == true);
+        var domainRow = new EnrollmentRow
+        {
+            Id = row.EfModel.Id,
+            Code = row.EfModel.Code,
+            CodeNumber = row.EfModel.CodeNumber,
+            StudentId = row.EfModel.StudentId,
+            LevelId = row.LevelId,
+            GradeId = row.GradeId,
+            ShiftId = row.ShiftId,
+            SectionId = row.SectionId,
+            SchoolFeeConceptId = row.EfModel.SchoolFeeConceptId,
+            SchoolYearId = row.EfModel.SchoolYearId,
+            PreviousSchool = row.EfModel.PreviousSchool,
+            StateName = row.StateName
+        };
+
+        return (row.EfModel, ToDomain(domainRow), schoolYear);
+    }
+
+    private async Task<int> GetStateIdAsync(string name)
+    {
+        var id = await _context.EnrollmentStates
+            .Where(s => s.Name == name)
+            .Select(s => s.Id)
+            .FirstOrDefaultAsync();
+        if (id == 0) throw new KeyNotFoundException($"Estado '{name}' no encontrado en la base de datos.");
+        return id;
     }
 
     private IQueryable<EnrollmentRow> JoinedEnrollments() =>

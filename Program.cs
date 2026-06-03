@@ -1,17 +1,12 @@
 using System.Text;
-using Isopoh.Cryptography.Argon2;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using SRJBackend.Application.Interfaces;
-using SRJBackend.Application.UseCases;
 using SRJBackend.Infrastructure;
 using SRJBackend.Infrastructure.Authorization;
+using SRJBackend.Infrastructure.Extensions;
 using SRJBackend.Infrastructure.Models;
-using SRJBackend.Infrastructure.Queries;
-using SRJBackend.Infrastructure.Repositories;
-using SRJBackend.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.UseUrls("http://localhost:4000");
@@ -25,64 +20,17 @@ builder.Services.AddProblemDetails();
 builder.Services.AddDbContext<SRJDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddScoped<IAuthRepository, AuthRepository>();
-builder.Services.AddScoped<IPersonRepository, PersonRepository>();
-builder.Services.AddScoped<IEducationalPersonRepository, EducationalPersonRepository>();
-builder.Services.AddScoped<IStudentRepository, StudentRepository>();
-builder.Services.AddScoped<IStudentHomeRepository, StudentHomeRepository>();
-builder.Services.AddScoped<IFamiliarStudentRelationshipRepository, FamiliarStudentRelationshipRepository>();
-builder.Services.AddScoped<IFamiliarRepository, FamiliarRepository>();
-builder.Services.AddScoped<IInstitutionRepository, InstitutionRepository>();
-builder.Services.AddScoped<ISchoolYearRepository, SchoolYearRepository>();
-builder.Services.AddScoped<IGradeRepository, GradeRepository>();
-builder.Services.AddScoped<ILevelRepository, LevelRepository>();
-builder.Services.AddScoped<IGradeOfferingRepository, GradeOfferingRepository>();
-builder.Services.AddScoped<IGradeOfferingShiftSectionRepository, GradeOfferingShiftSectionRepository>();
-builder.Services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-builder.Services.AddScoped<IJwtService, JwtService>();
-builder.Services.AddScoped<LoginUseCase>();
-builder.Services.AddScoped<CreateStudentUseCase>();
-builder.Services.AddScoped<UpdateStudentUseCase>();
-builder.Services.AddScoped<DeleteStudentUseCase>();
-builder.Services.AddScoped<IStudentQueries, StudentQueries>();
-builder.Services.AddScoped<ILookupQueries, LookupQueries>();
-builder.Services.AddScoped<ILocationQueries, LocationQueries>();
-builder.Services.AddScoped<IGradeQueries, GradeQueries>();
-builder.Services.AddScoped<ILevelQueries, LevelQueries>();
-builder.Services.AddScoped<IShiftQueries, ShiftQueries>();
-builder.Services.AddScoped<IGradeOfferingQueries, GradeOfferingQueries>();
-builder.Services.AddScoped<ISectionQueries, SectionQueries>();
-builder.Services.AddScoped<ISchoolYearQueries, SchoolYearQueries>();
-builder.Services.AddScoped<IInstitutionQueries, InstitutionQueries>();
-builder.Services.AddScoped<IEnrollmentQueries, EnrollmentQueries>();
-builder.Services.AddScoped<CreateInstitutionUseCase>();
-builder.Services.AddScoped<UpdateInstitutionUseCase>();
-builder.Services.AddScoped<DeleteInstitutionUseCase>();
-builder.Services.AddScoped<CreateSchoolYearUseCase>();
-builder.Services.AddScoped<UpdateSchoolYearUseCase>();
-builder.Services.AddScoped<DeleteSchoolYearUseCase>();
-builder.Services.AddScoped<CreateGradeUseCase>();
-builder.Services.AddScoped<UpdateGradeUseCase>();
-builder.Services.AddScoped<DeleteGradeUseCase>();
-builder.Services.AddScoped<CreateLevelUseCase>();
-builder.Services.AddScoped<UpdateLevelUseCase>();
-builder.Services.AddScoped<DeleteLevelUseCase>();
-builder.Services.AddScoped<CreateGradeOfferingUseCase>();
-builder.Services.AddScoped<UpdateGradeOfferingUseCase>();
-builder.Services.AddScoped<DeleteGradeOfferingUseCase>();
-builder.Services.AddScoped<CreateEnrollmentUseCase>();
-builder.Services.AddScoped<UpdateEnrollmentUseCase>();
-builder.Services.AddScoped<DeleteEnrollmentUseCase>();
-builder.Services.AddScoped<ISchoolFeeConceptRepository, SchoolFeeConceptRepository>();
-builder.Services.AddScoped<ISchoolFeeConceptQueries, SchoolFeeConceptQueries>();
-builder.Services.AddScoped<CreateSchoolFeeConceptUseCase>();
-builder.Services.AddScoped<UpdateSchoolFeeConceptUseCase>();
-builder.Services.AddScoped<DeleteSchoolFeeConceptUseCase>();
+builder.Services.AddAuthServices();
+builder.Services.AddStudentServices();
+builder.Services.AddAcademicServices();
+builder.Services.AddEnrollmentServices();
+builder.Services.AddSchoolFeeServices();
+builder.Services.AddLookupServices();
+builder.Services.AddPaymentServices();
+builder.Services.AddAccountingServices();
 
 builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
 builder.Services.AddSingleton<IAuthorizationMiddlewareResultHandler, CustomAuthorizationMiddlewareResultHandler>();
-
 builder.Services.AddAppAuthorization();
 
 builder.Services
@@ -102,16 +50,17 @@ builder.Services
         };
     });
 
+var allowedOrigins = builder.Configuration
+    .GetSection("Cors:AllowedOrigins")
+    .Get<string[]>() ?? [];
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend",
-        policy =>
-        {
-            policy.WithOrigins("http://localhost:5173") // o el puerto de tu frontend
-                  .AllowAnyHeader()
-                  .AllowAnyMethod()
-                  .WithExposedHeaders("Content-Range");
-        });
+    options.AddPolicy("AllowFrontend", policy =>
+        policy.WithOrigins(allowedOrigins)
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .WithExposedHeaders("Content-Range"));
 });
 
 var app = builder.Build();

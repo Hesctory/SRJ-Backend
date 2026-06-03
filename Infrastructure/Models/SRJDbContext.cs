@@ -15,6 +15,8 @@ public partial class SRJDbContext : DbContext
     {
     }
 
+    public virtual DbSet<Account> Accounts { get; set; }
+
     public virtual DbSet<AuditLog> AuditLogs { get; set; }
 
     public virtual DbSet<ChargeType> ChargeTypes { get; set; }
@@ -123,6 +125,29 @@ public partial class SRJDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<Account>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("accounts_pkey");
+
+            entity.ToTable("accounts");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Code)
+                .HasMaxLength(20)
+                .HasColumnName("code");
+            entity.Property(e => e.Name)
+                .HasMaxLength(100)
+                .HasColumnName("name");
+            entity.Property(e => e.ParentAccountId).HasColumnName("parent_account_id");
+            entity.Property(e => e.PrintCode)
+                .HasMaxLength(30)
+                .HasColumnName("print_code");
+
+            entity.HasOne(d => d.ParentAccount).WithMany(p => p.InverseParentAccount)
+                .HasForeignKey(d => d.ParentAccountId)
+                .HasConstraintName("accounts_parent_account_id_fkey");
+        });
+
         modelBuilder.Entity<AuditLog>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("audit_log_pkey");
@@ -432,6 +457,10 @@ public partial class SRJDbContext : DbContext
             entity.HasKey(e => e.Id).HasName("student_debts_pkey");
 
             entity.ToTable("enrollment_debts");
+
+            entity.HasIndex(e => new { e.PeriodMonth, e.SchoolYearId, e.EnrollmentId }, "idx_enrollment_debts_unique_period")
+                .IsUnique()
+                .HasFilter("(period_month IS NOT NULL)");
 
             entity.HasIndex(e => e.ChargeTypeId, "idx_student_debts_charge_type");
 

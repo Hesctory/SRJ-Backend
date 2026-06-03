@@ -55,9 +55,6 @@ public class UpdateEnrollmentUseCase
             else if (stateName == EnrollmentStateNames.Withdrawn && existing.Status == EnrollmentStatus.Active)
             {
                 await _enrollmentRepository.WithdrawAsync(id);
-                var hasValid = await _enrollmentQueries.HasValidEnrollmentsAsync(existing.StudentId);
-                if (!hasValid)
-                    await _studentRepository.ArchiveAsync(existing.StudentId);
             }
             else if (stateName == EnrollmentStateNames.Active && existing.Status == EnrollmentStatus.Cancelled)
             {

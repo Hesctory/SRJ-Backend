@@ -85,6 +85,27 @@ public static class AuthorizationPoliciesExtension
                 policy.Requirements.Add(new PermissionRequirement("school-fee-concept.update")));
             options.AddPolicy("school-fee-concept.delete", policy =>
                 policy.Requirements.Add(new PermissionRequirement("school-fee-concept.delete")));
+
+            options.AddPolicy("enrollment-debt.read", policy =>
+                policy.Requirements.Add(new PermissionRequirement("enrollment-debt.read")));
+
+            options.AddPolicy("debt-installment.read", policy =>
+                policy.Requirements.Add(new PermissionRequirement("debt-installment.read")));
+
+            options.AddPolicy("payment-method.read", policy =>
+                policy.Requirements.Add(new PermissionRequirement("payment-method.read")));
+
+            options.AddPolicy("payment.create", policy =>
+                policy.Requirements.Add(new PermissionRequirement("payment.create")));
+
+            options.AddPolicy("accounting-plan.create", policy =>
+                policy.Requirements.Add(new PermissionRequirement("accounting-plan.create")));
+            options.AddPolicy("accounting-plan.read", policy =>
+                policy.Requirements.Add(new PermissionRequirement("accounting-plan.read")));
+            options.AddPolicy("accounting-plan.update", policy =>
+                policy.Requirements.Add(new PermissionRequirement("accounting-plan.update")));
+            options.AddPolicy("accounting-plan.delete", policy =>
+                policy.Requirements.Add(new PermissionRequirement("accounting-plan.delete")));
         });
 
         return services;
