@@ -18,12 +18,10 @@ public class StudentRepository : IStudentRepository
     public async Task<(List<DStudent> Items, int Total)> GetPagedAsync(int skip, int take)
     {
         var query = _context.Students
-            .Include(s => s.EducationalPerson)
-                .ThenInclude(ep => ep.Person)
-                    .ThenInclude(p => p.Gender)
-            .Include(s => s.EducationalPerson)
-                .ThenInclude(ep => ep.Person)
-                    .ThenInclude(p => p.DocumentType);
+            .Include(s => s.Person)
+                .ThenInclude(p => p.Gender)
+            .Include(s => s.Person)
+                .ThenInclude(p => p.DocumentType);
 
         var total = await query.CountAsync();
         var students = await query.Skip(skip).Take(take).ToListAsync();
@@ -35,7 +33,7 @@ public class StudentRepository : IStudentRepository
     {
         var s = new Student
         {
-            EducationalPersonId = personId,
+            PersonId = personId,
             BirthUbigeoId = student.BirthLocation.DistrictId,
             HasDisability = student.Profile.HasDisability,
             Siblings = student.Profile.Siblings,
@@ -78,7 +76,7 @@ public class StudentRepository : IStudentRepository
     }
 
     public async Task<bool> ExistsAsync(int id) =>
-        await _context.Students.AnyAsync(s => s.EducationalPersonId == id);
+        await _context.Students.AnyAsync(s => s.PersonId == id);
 
     public async Task<bool> TryDeleteAsync(int id)
     {
@@ -121,12 +119,6 @@ public class StudentRepository : IStudentRepository
         return true;
     }
 
-    public async Task<bool> ExistsByEducationalPersonIdAsync(int educationalPersonId)
-    {
-        return await _context.Students
-            .AnyAsync(s => s.EducationalPersonId == educationalPersonId);
-    }
-
     public async Task<DStudent?> GetByIdAsync(int id)
     {
         var student = await _context.Students
@@ -134,39 +126,34 @@ public class StudentRepository : IStudentRepository
             .Include(s => s.BirthUbigeo)
                 .ThenInclude(u => u.District)
                     .ThenInclude(d => d.Province)
-            .Include(s => s.EducationalPerson)
-                .ThenInclude(ep => ep.Person)
-                    .ThenInclude(p => p.Gender)
-            .Include(s => s.EducationalPerson)
-                .ThenInclude(ep => ep.Person)
-                    .ThenInclude(p => p.DocumentType)
-            .Include(s => s.EducationalPerson)
-                .ThenInclude(ep => ep.Person)
-                    .ThenInclude(p => p.AddressUbigeo)
-                        .ThenInclude(u => u.District)
-                            .ThenInclude(d => d.Province)
-            .Include(s => s.EducationalPerson)
-                .ThenInclude(ep => ep.SecondLanguages)
+            .Include(s => s.Person)
+                .ThenInclude(p => p.Gender)
+            .Include(s => s.Person)
+                .ThenInclude(p => p.DocumentType)
+            .Include(s => s.Person)
+                .ThenInclude(p => p.AddressUbigeo)
+                    .ThenInclude(u => u.District)
+                        .ThenInclude(d => d.Province)
+            .Include(s => s.Person)
+                .ThenInclude(p => p.SecondLanguages)
             .Include(s => s.FamiliarStudentRelationships)
                 .ThenInclude(fsr => fsr.Familiar)
-                    .ThenInclude(f => f.EducationalPerson)
-                        .ThenInclude(ep => ep.Person)
-                            .ThenInclude(p => p.AddressUbigeo)
-                                .ThenInclude(u => u.District)
-                                    .ThenInclude(d => d.Province)
+                    .ThenInclude(f => f.Person)
+                        .ThenInclude(p => p.AddressUbigeo)
+                            .ThenInclude(u => u.District)
+                                .ThenInclude(d => d.Province)
             .Include(s => s.FamiliarStudentRelationships)
                 .ThenInclude(fsr => fsr.Familiar)
-                    .ThenInclude(f => f.EducationalPerson)
-                        .ThenInclude(ep => ep.SecondLanguages)
-            .FirstOrDefaultAsync(s => s.EducationalPersonId == id);
+                    .ThenInclude(f => f.Person)
+                        .ThenInclude(p => p.SecondLanguages)
+            .FirstOrDefaultAsync(s => s.PersonId == id);
 
         return student == null ? null : MapToDomain(student);
     }
 
     private static DStudent MapToDomain(Student s)
     {
-        var person = s.EducationalPerson.Person;
-        var ep = s.EducationalPerson;
+        var person = s.Person;
 
         var birthLocation = s.BirthUbigeo != null
             ? new DLocation(
@@ -182,11 +169,11 @@ public class StudentRepository : IStudentRepository
                 DistrictId: person.AddressUbigeo.DistrictId)
             : new DLocation(0, 0, person.AddressUbigeoId);
 
-        var secondLanguageIds = ep.SecondLanguages.Count > 0
-            ? ep.SecondLanguages.Select(l => l.Id).ToList()
+        var secondLanguageIds = person.SecondLanguages.Count > 0
+            ? person.SecondLanguages.Select(l => l.Id).ToList()
             : null;
 
-        var demographics = new EducationalDemographics(ep.NativeLanguageId, ep.EthnicSelfIdentificationId, secondLanguageIds);
+        var demographics = new EducationalDemographics(person.NativeLanguageId ?? 0, person.EthnicSelfIdentificationId, secondLanguageIds);
         var profile = new StudentProfile(
             s.StudentHome?.HasElectronicDevices ?? false,
             s.StudentHome?.HasInternetAccess ?? false,
@@ -199,7 +186,7 @@ public class StudentRepository : IStudentRepository
             .ToList();
 
         return DStudent.Reconstitute(
-            id: s.EducationalPersonId,
+            id: s.PersonId,
             name: new PersonalName(person.Names, person.PaternalLastname, person.MaternalLastname),
             genderId: person.GenderId,
             birthDate: person.BirthDate,
@@ -220,8 +207,7 @@ public class StudentRepository : IStudentRepository
     private static DFamiliar MapFamiliar(FamiliarStudentRelationship fsr)
     {
         var familiar = fsr.Familiar;
-        var ep = familiar.EducationalPerson;
-        var person = ep.Person;
+        var person = familiar.Person;
 
         DLocation? addressLocation = null;
         if (person.AddressUbigeo != null)
@@ -232,11 +218,11 @@ public class StudentRepository : IStudentRepository
                 DistrictId: person.AddressUbigeo.DistrictId);
         }
 
-        var secondLanguageIds = ep.SecondLanguages.Count > 0
-            ? ep.SecondLanguages.Select(l => l.Id).ToList()
+        var secondLanguageIds = person.SecondLanguages.Count > 0
+            ? person.SecondLanguages.Select(l => l.Id).ToList()
             : null;
 
-        var demographics = new EducationalDemographics(ep.NativeLanguageId, ep.EthnicSelfIdentificationId, secondLanguageIds);
+        var demographics = new EducationalDemographics(person.NativeLanguageId ?? 0, person.EthnicSelfIdentificationId, secondLanguageIds);
 
         return DFamiliar.Reconstitute(
             id: person.Id,

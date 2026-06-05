@@ -35,15 +35,29 @@ public partial class Person
 
     public int? ReligionId { get; set; }
 
+    public int? EthnicSelfIdentificationId { get; set; }
+
+    public int? NativeLanguageId { get; set; }
+
     public virtual Ubigeo AddressUbigeo { get; set; } = null!;
 
     public virtual CivilState? CivilState { get; set; }
 
     public virtual DocumentType DocumentType { get; set; } = null!;
 
-    public virtual EducationalPerson? EducationalPerson { get; set; }
+    public virtual EthnicSelfIdentification? EthnicSelfIdentification { get; set; }
+
+    public virtual Familiar? Familiar { get; set; }
 
     public virtual Gender Gender { get; set; } = null!;
 
+    public virtual Language? NativeLanguage { get; set; }
+
     public virtual Religion? Religion { get; set; }
+
+    public virtual StaffMember? StaffMember { get; set; }
+
+    public virtual Student? Student { get; set; }
+
+    public virtual ICollection<Language> SecondLanguages { get; set; } = new List<Language>();
 }

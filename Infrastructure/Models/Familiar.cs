@@ -5,7 +5,7 @@ namespace SRJBackend.Infrastructure.Models;
 
 public partial class Familiar
 {
-    public int EducationalPersonId { get; set; }
+    public int PersonId { get; set; }
 
     public int? LevelOfEducationId { get; set; }
 
@@ -15,9 +15,9 @@ public partial class Familiar
 
     public bool Lives { get; set; }
 
-    public virtual EducationalPerson EducationalPerson { get; set; } = null!;
-
     public virtual ICollection<FamiliarStudentRelationship> FamiliarStudentRelationships { get; set; } = new List<FamiliarStudentRelationship>();
 
     public virtual LevelOfEducation? LevelOfEducation { get; set; }
+
+    public virtual Person Person { get; set; } = null!;
 }

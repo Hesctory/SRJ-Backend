@@ -106,6 +106,42 @@ public static class AuthorizationPoliciesExtension
                 policy.Requirements.Add(new PermissionRequirement("accounting-plan.update")));
             options.AddPolicy("accounting-plan.delete", policy =>
                 policy.Requirements.Add(new PermissionRequirement("accounting-plan.delete")));
+
+            options.AddPolicy("work-area.create", policy =>
+                policy.Requirements.Add(new PermissionRequirement("work-area.create")));
+            options.AddPolicy("work-area.read", policy =>
+                policy.Requirements.Add(new PermissionRequirement("work-area.read")));
+            options.AddPolicy("work-area.update", policy =>
+                policy.Requirements.Add(new PermissionRequirement("work-area.update")));
+            options.AddPolicy("work-area.delete", policy =>
+                policy.Requirements.Add(new PermissionRequirement("work-area.delete")));
+
+            options.AddPolicy("job-position.create", policy =>
+                policy.Requirements.Add(new PermissionRequirement("job-position.create")));
+            options.AddPolicy("job-position.read", policy =>
+                policy.Requirements.Add(new PermissionRequirement("job-position.read")));
+            options.AddPolicy("job-position.update", policy =>
+                policy.Requirements.Add(new PermissionRequirement("job-position.update")));
+            options.AddPolicy("job-position.delete", policy =>
+                policy.Requirements.Add(new PermissionRequirement("job-position.delete")));
+
+            options.AddPolicy("staff-member.create", policy =>
+                policy.Requirements.Add(new PermissionRequirement("staff-member.create")));
+            options.AddPolicy("staff-member.read", policy =>
+                policy.Requirements.Add(new PermissionRequirement("staff-member.read")));
+            options.AddPolicy("staff-member.update", policy =>
+                policy.Requirements.Add(new PermissionRequirement("staff-member.update")));
+            options.AddPolicy("staff-member.delete", policy =>
+                policy.Requirements.Add(new PermissionRequirement("staff-member.delete")));
+
+            options.AddPolicy("employment-contract.create", policy =>
+                policy.Requirements.Add(new PermissionRequirement("employment-contract.create")));
+            options.AddPolicy("employment-contract.read", policy =>
+                policy.Requirements.Add(new PermissionRequirement("employment-contract.read")));
+            options.AddPolicy("employment-contract.update", policy =>
+                policy.Requirements.Add(new PermissionRequirement("employment-contract.update")));
+            options.AddPolicy("employment-contract.delete", policy =>
+                policy.Requirements.Add(new PermissionRequirement("employment-contract.delete")));
         });
 
         return services;

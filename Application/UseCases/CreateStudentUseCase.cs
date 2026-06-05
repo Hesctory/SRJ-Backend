@@ -9,7 +9,6 @@ namespace SRJBackend.Application.UseCases;
 public class CreateStudentUseCase
 {
     private readonly IPersonRepository _personRepository;
-    private readonly IEducationalPersonRepository _educationalPersonRepository;
     private readonly IStudentRepository _studentRepository;
     private readonly IFamiliarRepository _familiarRepository;
     private readonly IEnrollmentRepository _enrollmentRepository;
@@ -18,7 +17,6 @@ public class CreateStudentUseCase
 
     public CreateStudentUseCase(
         IPersonRepository personRepository,
-        IEducationalPersonRepository educationalPersonRepository,
         IStudentRepository studentRepository,
         IFamiliarRepository familiarRepository,
         IEnrollmentRepository enrollmentRepository,
@@ -26,7 +24,6 @@ public class CreateStudentUseCase
         IUnitOfWork unitOfWork)
     {
         _personRepository = personRepository;
-        _educationalPersonRepository = educationalPersonRepository;
         _studentRepository = studentRepository;
         _familiarRepository = familiarRepository;
         _enrollmentRepository = enrollmentRepository;
@@ -58,11 +55,10 @@ public class CreateStudentUseCase
             var student = StudentMapper.FromDTO(dto);
 
             var personId = await _personRepository.CreateAsync(student);
-
-            await _educationalPersonRepository.CreateAsync(personId, student.Demographics.NativeLanguageId, student.Demographics.EthnicSelfIdentificationId);
+            await _personRepository.UpdateDemographicsAsync(personId, student.Demographics.NativeLanguageId, student.Demographics.EthnicSelfIdentificationId);
 
             if (student.Demographics.SecondLanguageIds != null && student.Demographics.SecondLanguageIds.Count > 0)
-                await _educationalPersonRepository.AddSecondLanguagesAsync(personId, student.Demographics.SecondLanguageIds);
+                await _personRepository.AddSecondLanguagesAsync(personId, student.Demographics.SecondLanguageIds);
 
             await _studentRepository.CreateAsync(student, personId);
             await _studentRepository.CreateHomeAsync(student, personId);
@@ -92,21 +88,16 @@ public class CreateStudentUseCase
         if (existingPersonId == null)
         {
             personId = await _personRepository.CreateAsync(StudentMapper.PersonFromFamiliar(familiar));
+            await _personRepository.UpdateDemographicsAsync(personId, familiar.Demographics.NativeLanguageId, familiar.Demographics.EthnicSelfIdentificationId);
+            if (familiar.Demographics.SecondLanguageIds != null && familiar.Demographics.SecondLanguageIds.Count > 0)
+                await _personRepository.AddSecondLanguagesAsync(personId, familiar.Demographics.SecondLanguageIds);
         }
         else
         {
             personId = existingPersonId.Value;
         }
 
-        var epExists = await _educationalPersonRepository.ExistsByPersonIdAsync(personId);
-        if (!epExists)
-        {
-            await _educationalPersonRepository.CreateAsync(personId, familiar.Demographics.NativeLanguageId, familiar.Demographics.EthnicSelfIdentificationId);
-            if (familiar.Demographics.SecondLanguageIds != null && familiar.Demographics.SecondLanguageIds.Count > 0)
-                await _educationalPersonRepository.AddSecondLanguagesAsync(personId, familiar.Demographics.SecondLanguageIds);
-        }
-
-        var familiarExists = await _familiarRepository.ExistsByEducationalPersonIdAsync(personId);
+        var familiarExists = await _familiarRepository.ExistsByPersonIdAsync(personId);
         if (!familiarExists)
             await _familiarRepository.CreateAsync(familiar, personId);
 

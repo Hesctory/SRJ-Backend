@@ -14,17 +14,17 @@ public class FamiliarRepository : IFamiliarRepository
         _context = context;
     }
 
-    public async Task<bool> ExistsByEducationalPersonIdAsync(int educationalPersonId)
+    public async Task<bool> ExistsByPersonIdAsync(int personId)
     {
         return await _context.Familiars
-            .AnyAsync(f => f.EducationalPersonId == educationalPersonId);
+            .AnyAsync(f => f.PersonId == personId);
     }
 
-    public async Task CreateAsync(DFamiliar familiar, int educationalPersonId)
+    public async Task CreateAsync(DFamiliar familiar, int personId)
     {
         var f = new Familiar
         {
-            EducationalPersonId = educationalPersonId,
+            PersonId = personId,
             LevelOfEducationId = familiar.LevelOfEducationId,
             Occupation = familiar.Occupation,
             Workplace = familiar.WorkCenter,
@@ -34,9 +34,9 @@ public class FamiliarRepository : IFamiliarRepository
         await _context.SaveChangesAsync();
     }
 
-    public async Task UpdateAsync(DFamiliar familiar, int educationalPersonId)
+    public async Task UpdateAsync(DFamiliar familiar, int personId)
     {
-        var f = await _context.Familiars.FindAsync(educationalPersonId);
+        var f = await _context.Familiars.FindAsync(personId);
         if (f == null) return;
         f.LevelOfEducationId = familiar.LevelOfEducationId;
         f.Occupation = familiar.Occupation;
@@ -59,9 +59,9 @@ public class FamiliarRepository : IFamiliarRepository
         await _context.SaveChangesAsync();
     }
 
-    public async Task<bool> TryDeleteAsync(int educationalPersonId)
+    public async Task<bool> TryDeleteAsync(int personId)
     {
-        var familiar = await _context.Familiars.FindAsync(educationalPersonId);
+        var familiar = await _context.Familiars.FindAsync(personId);
         if (familiar == null) return false;
         try
         {

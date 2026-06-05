@@ -29,23 +29,23 @@ public class StudentQueries : IStudentQueries
 
         if (!string.IsNullOrWhiteSpace(filter?.FullName))
             query = query.Where(s =>
-                EF.Functions.ILike(s.EducationalPerson.Person.Names, $"%{filter.FullName}%") ||
-                EF.Functions.ILike(s.EducationalPerson.Person.PaternalLastname, $"%{filter.FullName}%") ||
-                EF.Functions.ILike(s.EducationalPerson.Person.MaternalLastname, $"%{filter.FullName}%"));
+                EF.Functions.ILike(s.Person.Names, $"%{filter.FullName}%") ||
+                EF.Functions.ILike(s.Person.PaternalLastname, $"%{filter.FullName}%") ||
+                EF.Functions.ILike(s.Person.MaternalLastname, $"%{filter.FullName}%"));
 
         if (!string.IsNullOrWhiteSpace(filter?.Dni))
-            query = query.Where(s => s.EducationalPerson.Person.IdDocumentNumber.Contains(filter.Dni));
+            query = query.Where(s => s.Person.IdDocumentNumber.Contains(filter.Dni));
 
         var total = await query.CountAsync();
         var items = await query
             .Skip(skip).Take(take)
             .Select(s => new StudentListDTO
             {
-                id = s.EducationalPersonId,
-                FullName = (s.EducationalPerson.Person.Names + " " +
-                            s.EducationalPerson.Person.PaternalLastname + " " +
-                            s.EducationalPerson.Person.MaternalLastname).Trim(),
-                Dni = s.EducationalPerson.Person.IdDocumentNumber
+                id = s.PersonId,
+                FullName = (s.Person.Names + " " +
+                            s.Person.PaternalLastname + " " +
+                            s.Person.MaternalLastname).Trim(),
+                Dni = s.Person.IdDocumentNumber
             })
             .ToListAsync();
         return (items, total);
@@ -58,25 +58,23 @@ public class StudentQueries : IStudentQueries
             .Include(s => s.BirthUbigeo)
                 .ThenInclude(u => u.District)
                     .ThenInclude(d => d.Province)
-            .Include(s => s.EducationalPerson)
-                .ThenInclude(ep => ep.Person)
-                    .ThenInclude(p => p.AddressUbigeo)
-                        .ThenInclude(u => u.District)
-                            .ThenInclude(d => d.Province)
-            .Include(s => s.EducationalPerson)
-                .ThenInclude(ep => ep.SecondLanguages)
+            .Include(s => s.Person)
+                .ThenInclude(p => p.AddressUbigeo)
+                    .ThenInclude(u => u.District)
+                        .ThenInclude(d => d.Province)
+            .Include(s => s.Person)
+                .ThenInclude(p => p.SecondLanguages)
             .Include(s => s.FamiliarStudentRelationships)
                 .ThenInclude(fsr => fsr.Familiar)
-                    .ThenInclude(f => f.EducationalPerson)
-                        .ThenInclude(ep => ep.Person)
-                            .ThenInclude(p => p.AddressUbigeo)
-                                .ThenInclude(u => u.District)
-                                    .ThenInclude(d => d.Province)
+                    .ThenInclude(f => f.Person)
+                        .ThenInclude(p => p.AddressUbigeo)
+                            .ThenInclude(u => u.District)
+                                .ThenInclude(d => d.Province)
             .Include(s => s.FamiliarStudentRelationships)
                 .ThenInclude(fsr => fsr.Familiar)
-                    .ThenInclude(f => f.EducationalPerson)
-                        .ThenInclude(ep => ep.SecondLanguages)
-            .FirstOrDefaultAsync(s => s.EducationalPersonId == id);
+                    .ThenInclude(f => f.Person)
+                        .ThenInclude(p => p.SecondLanguages)
+            .FirstOrDefaultAsync(s => s.PersonId == id);
 
         return s == null ? null : MapToDTO(s);
     }
@@ -105,10 +103,10 @@ public class StudentQueries : IStudentQueries
             {
                 Id = e.Id,
                 EnrollmentCode = e.Code,
-                DocumentNumber = e.Student!.EducationalPerson.Person.IdDocumentNumber,
-                FullName = (e.Student!.EducationalPerson.Person.Names + " " +
-                            e.Student!.EducationalPerson.Person.PaternalLastname + " " +
-                            e.Student!.EducationalPerson.Person.MaternalLastname).Trim(),
+                DocumentNumber = e.Student!.Person.IdDocumentNumber,
+                FullName = (e.Student!.Person.Names + " " +
+                            e.Student!.Person.PaternalLastname + " " +
+                            e.Student!.Person.MaternalLastname).Trim(),
                 GradeYear = e.GradeOfferingShiftSection.GradeOfferingShift.GradeOffering.Grade.Year,
                 Year = e.SchoolYear.Year,
                 Level = e.GradeOfferingShiftSection.GradeOfferingShift.GradeOffering.Grade.Level.Name,
@@ -120,8 +118,7 @@ public class StudentQueries : IStudentQueries
 
     private static StudentDetailDTO MapToDTO(Student s)
     {
-        var person = s.EducationalPerson.Person;
-        var ep = s.EducationalPerson;
+        var person = s.Person;
 
         var birthLocation = s.BirthUbigeo != null
             ? new LocationDTO
@@ -143,7 +140,7 @@ public class StudentQueries : IStudentQueries
 
         return new StudentDetailDTO
         {
-            Id = s.EducationalPersonId,
+            Id = s.PersonId,
             Names = person.Names,
             PaternalLastname = person.PaternalLastname,
             MaternalLastname = person.MaternalLastname,
@@ -159,10 +156,10 @@ public class StudentQueries : IStudentQueries
             Email = person.Email,
             LandlinePhone = person.LandlinePhone,
             CellPhone = person.CellPhone,
-            NativeLanguageId = ep.NativeLanguageId,
-            EthnicSelfIdentificationId = ep.EthnicSelfIdentificationId,
-            SecondLanguageIds = ep.SecondLanguages.Count > 0
-                ? ep.SecondLanguages.Select(l => l.Id).ToList()
+            NativeLanguageId = person.NativeLanguageId ?? 0,
+            EthnicSelfIdentificationId = person.EthnicSelfIdentificationId,
+            SecondLanguageIds = person.SecondLanguages.Count > 0
+                ? person.SecondLanguages.Select(l => l.Id).ToList()
                 : null,
             HasElectronicDevices = s.StudentHome?.HasElectronicDevices ?? false,
             HasInternetAccess = s.StudentHome?.HasInternetAccess ?? false,
@@ -180,8 +177,7 @@ public class StudentQueries : IStudentQueries
     private static FamiliarDetailDTO MapFamiliar(FamiliarStudentRelationship fsr)
     {
         var familiar = fsr.Familiar;
-        var ep = familiar.EducationalPerson;
-        var person = ep.Person;
+        var person = familiar.Person;
 
         var addressLocation = person.AddressUbigeo != null
             ? new LocationDTO
@@ -210,10 +206,10 @@ public class StudentQueries : IStudentQueries
             Email = person.Email,
             LandlinePhone = person.LandlinePhone,
             CellPhone = person.CellPhone,
-            NativeLanguageId = ep.NativeLanguageId,
-            EthnicSelfIdentificationId = ep.EthnicSelfIdentificationId,
-            SecondLanguageIds = ep.SecondLanguages.Count > 0
-                ? ep.SecondLanguages.Select(l => l.Id).ToList()
+            NativeLanguageId = person.NativeLanguageId ?? 0,
+            EthnicSelfIdentificationId = person.EthnicSelfIdentificationId,
+            SecondLanguageIds = person.SecondLanguages.Count > 0
+                ? person.SecondLanguages.Select(l => l.Id).ToList()
                 : null,
             LevelOfEducationId = familiar.LevelOfEducationId,
             Occupation = familiar.Occupation,

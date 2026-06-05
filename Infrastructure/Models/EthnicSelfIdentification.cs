@@ -9,5 +9,5 @@ public partial class EthnicSelfIdentification
 
     public string EthnicSelfIdentification1 { get; set; } = null!;
 
-    public virtual ICollection<EducationalPerson> EducationalPeople { get; set; } = new List<EducationalPerson>();
+    public virtual ICollection<Person> People { get; set; } = new List<Person>();
 }

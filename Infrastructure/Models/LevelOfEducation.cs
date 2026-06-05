@@ -10,4 +10,6 @@ public partial class LevelOfEducation
     public string Name { get; set; } = null!;
 
     public virtual ICollection<Familiar> Familiars { get; set; } = new List<Familiar>();
+
+    public virtual ICollection<StaffMember> StaffMembers { get; set; } = new List<StaffMember>();
 }

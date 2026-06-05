@@ -10,7 +10,6 @@ public static class StudentServiceExtensions
     public static IServiceCollection AddStudentServices(this IServiceCollection services)
     {
         services.AddScoped<IPersonRepository, PersonRepository>();
-        services.AddScoped<IEducationalPersonRepository, EducationalPersonRepository>();
         services.AddScoped<IStudentRepository, StudentRepository>();
         services.AddScoped<IStudentHomeRepository, StudentHomeRepository>();
         services.AddScoped<IFamiliarRepository, FamiliarRepository>();

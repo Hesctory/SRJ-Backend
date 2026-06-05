@@ -67,6 +67,42 @@ public class PersonRepository : IPersonRepository
         await _context.SaveChangesAsync();
     }
 
+    public async Task UpdateDemographicsAsync(int personId, int nativeLanguageId, int? ethnicSelfIdentificationId)
+    {
+        var person = await _context.People.FindAsync(personId);
+        if (person == null) return;
+        person.NativeLanguageId = nativeLanguageId;
+        person.EthnicSelfIdentificationId = ethnicSelfIdentificationId;
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task AddSecondLanguagesAsync(int personId, List<int> languageIds)
+    {
+        var set = _context.Set<Dictionary<string, object>>("SecondLanguage");
+        foreach (var languageId in languageIds)
+        {
+            set.Add(new Dictionary<string, object>
+            {
+                ["PersonId"] = personId,
+                ["SecondLanguageId"] = languageId
+            });
+        }
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task DeleteSecondLanguagesAsync(int personId)
+    {
+        var set = _context.Set<Dictionary<string, object>>("SecondLanguage");
+        var rows = await set
+            .Where(sl => (int)sl["PersonId"] == personId)
+            .ToListAsync();
+        if (rows.Count > 0)
+        {
+            set.RemoveRange(rows);
+            await _context.SaveChangesAsync();
+        }
+    }
+
     public async Task<bool> TryDeleteAsync(int id)
     {
         var person = await _context.People.FindAsync(id);

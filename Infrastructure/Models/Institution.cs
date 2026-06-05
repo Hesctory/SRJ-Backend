@@ -13,5 +13,7 @@ public partial class Institution
 
     public int RucStateId { get; set; }
 
+    public virtual ICollection<EmploymentContract> EmploymentContracts { get; set; } = new List<EmploymentContract>();
+
     public virtual RucState RucState { get; set; } = null!;
 }

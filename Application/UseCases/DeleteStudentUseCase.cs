@@ -8,7 +8,6 @@ public class DeleteStudentUseCase
     private readonly IStudentHomeRepository _studentHomeRepository;
     private readonly IFamiliarStudentRelationshipRepository _familiarStudentRelationshipRepository;
     private readonly IFamiliarRepository _familiarRepository;
-    private readonly IEducationalPersonRepository _educationalPersonRepository;
     private readonly IPersonRepository _personRepository;
 
     public DeleteStudentUseCase(
@@ -16,14 +15,12 @@ public class DeleteStudentUseCase
         IStudentHomeRepository studentHomeRepository,
         IFamiliarStudentRelationshipRepository familiarStudentRelationshipRepository,
         IFamiliarRepository familiarRepository,
-        IEducationalPersonRepository educationalPersonRepository,
         IPersonRepository personRepository)
     {
         _studentRepository = studentRepository;
         _studentHomeRepository = studentHomeRepository;
         _familiarStudentRelationshipRepository = familiarStudentRelationshipRepository;
         _familiarRepository = familiarRepository;
-        _educationalPersonRepository = educationalPersonRepository;
         _personRepository = personRepository;
     }
 
@@ -41,10 +38,7 @@ public class DeleteStudentUseCase
             var familiarDeleted = await _familiarRepository.TryDeleteAsync(familiarId);
             if (!familiarDeleted) continue;
 
-            await _educationalPersonRepository.DeleteSecondLanguagesByEducationalPersonIdAsync(familiarId);
-            var epDeleted = await _educationalPersonRepository.TryDeleteAsync(familiarId);
-            if (!epDeleted) continue;
-
+            await _personRepository.DeleteSecondLanguagesAsync(familiarId);
             await _personRepository.TryDeleteAsync(familiarId);
         }
 
@@ -55,11 +49,7 @@ public class DeleteStudentUseCase
         if (!studentDeleted)
             return false;
 
-        await _educationalPersonRepository.DeleteSecondLanguagesByEducationalPersonIdAsync(id);
-        var studentEpDeleted = await _educationalPersonRepository.TryDeleteAsync(id);
-        if (!studentEpDeleted)
-            return true;
-
+        await _personRepository.DeleteSecondLanguagesAsync(id);
         await _personRepository.TryDeleteAsync(id);
 
         return true;
