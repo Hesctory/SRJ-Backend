@@ -77,6 +77,10 @@ public partial class SRJDbContext : DbContext
 
     public virtual DbSet<LevelOfEducation> LevelOfEducations { get; set; }
 
+    public virtual DbSet<Lunch> Lunches { get; set; }
+
+    public virtual DbSet<LunchCategory> LunchCategories { get; set; }
+
     public virtual DbSet<Payment> Payments { get; set; }
 
     public virtual DbSet<PaymentDebtAllocation> PaymentDebtAllocations { get; set; }
@@ -830,6 +834,45 @@ public partial class SRJDbContext : DbContext
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Name)
                 .HasMaxLength(40)
+                .HasColumnName("name");
+        });
+
+        modelBuilder.Entity<Lunch>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("lunches_pkey");
+
+            entity.ToTable("lunches");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Comment).HasColumnName("comment");
+            entity.Property(e => e.CostPrice)
+                .HasPrecision(10, 2)
+                .HasColumnName("cost_price");
+            entity.Property(e => e.LunchCategoryId).HasColumnName("lunch_category_id");
+            entity.Property(e => e.LunchName)
+                .HasMaxLength(100)
+                .HasColumnName("lunch_name");
+            entity.Property(e => e.SalePrice)
+                .HasPrecision(10, 2)
+                .HasColumnName("sale_price");
+
+            entity.HasOne(d => d.LunchCategory).WithMany(p => p.Lunches)
+                .HasForeignKey(d => d.LunchCategoryId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("lunches_lunch_category_id_fkey");
+        });
+
+        modelBuilder.Entity<LunchCategory>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("lunch_categories_pkey");
+
+            entity.ToTable("lunch_categories");
+
+            entity.HasIndex(e => e.Name, "lunch_categories_name_key").IsUnique();
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Name)
+                .HasMaxLength(50)
                 .HasColumnName("name");
         });
 

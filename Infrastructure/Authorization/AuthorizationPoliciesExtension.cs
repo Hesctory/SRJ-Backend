@@ -132,7 +132,7 @@ public static class AuthorizationPoliciesExtension
             options.AddPolicy("staff-member.update", policy =>
                 policy.Requirements.Add(new PermissionRequirement("staff-member.update")));
             options.AddPolicy("staff-member.delete", policy =>
-                policy.Requirements.Add(new PermissionRequirement("staff-member.delete")));
+                policy.Requirements.Add(new PermissionRequirement("staff-member.delete"))); 
 
             options.AddPolicy("employment-contract.create", policy =>
                 policy.Requirements.Add(new PermissionRequirement("employment-contract.create")));
@@ -142,6 +142,24 @@ public static class AuthorizationPoliciesExtension
                 policy.Requirements.Add(new PermissionRequirement("employment-contract.update")));
             options.AddPolicy("employment-contract.delete", policy =>
                 policy.Requirements.Add(new PermissionRequirement("employment-contract.delete")));
+
+            options.AddPolicy("lunch-category.create", policy =>
+                policy.Requirements.Add(new PermissionRequirement("lunch-category.create")));
+            options.AddPolicy("lunch-category.read", policy =>
+                policy.Requirements.Add(new PermissionRequirement("lunch-category.read")));
+            options.AddPolicy("lunch-category.update", policy =>
+                policy.Requirements.Add(new PermissionRequirement("lunch-category.update")));
+            options.AddPolicy("lunch-category.delete", policy =>
+                policy.Requirements.Add(new PermissionRequirement("lunch-category.delete")));
+
+            options.AddPolicy("lunch.create", policy =>
+                policy.Requirements.Add(new PermissionRequirement("lunch.create")));
+            options.AddPolicy("lunch.read", policy =>
+                policy.Requirements.Add(new PermissionRequirement("lunch.read")));
+            options.AddPolicy("lunch.update", policy =>
+                policy.Requirements.Add(new PermissionRequirement("lunch.update")));
+            options.AddPolicy("lunch.delete", policy =>
+                policy.Requirements.Add(new PermissionRequirement("lunch.delete")));
         });
 
         return services;

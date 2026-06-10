@@ -56,6 +56,9 @@ public class StaffMemberQueries : IStaffMemberQueries
     {
         var s = await _context.StaffMembers
             .Include(s => s.Person)
+                .ThenInclude(p => p.AddressUbigeo)
+                    .ThenInclude(u => u.District)
+                        .ThenInclude(d => d.Province)
             .Include(s => s.EmploymentContracts)
             .AsNoTracking()
             .FirstOrDefaultAsync(s => s.PersonId == id);
@@ -77,6 +80,14 @@ public class StaffMemberQueries : IStaffMemberQueries
             CivilStateId = s.Person.CivilStateId,
             Address = s.Person.Address,
             AddressUbigeoId = s.Person.AddressUbigeoId,
+            AddressLocation = s.Person.AddressUbigeo != null
+                ? new LocationDTO
+                {
+                    DepartmentId = s.Person.AddressUbigeo.District.Province.DepartmentId,
+                    ProvinceId = s.Person.AddressUbigeo.District.ProvinceId,
+                    DistrictId = s.Person.AddressUbigeo.DistrictId
+                }
+                : new LocationDTO { DistrictId = s.Person.AddressUbigeoId },
             Email = s.Person.Email,
             LandlinePhone = s.Person.LandlinePhone,
             CellPhone = s.Person.CellPhone,

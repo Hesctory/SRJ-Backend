@@ -15,6 +15,7 @@ public class StaffMemberDetailDTO
     public int? CivilStateId { get; set; }
     public string? Address { get; set; }
     public int AddressUbigeoId { get; set; }
+    public LocationDTO? AddressLocation { get; set; }
     public string? Email { get; set; }
     public string? LandlinePhone { get; set; }
     public string? CellPhone { get; set; }

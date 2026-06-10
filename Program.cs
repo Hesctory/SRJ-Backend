@@ -29,6 +29,7 @@ builder.Services.AddLookupServices();
 builder.Services.AddPaymentServices();
 builder.Services.AddAccountingServices();
 builder.Services.AddStaffServices();
+builder.Services.AddLunchServices();
 
 builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
 builder.Services.AddSingleton<IAuthorizationMiddlewareResultHandler, CustomAuthorizationMiddlewareResultHandler>();
