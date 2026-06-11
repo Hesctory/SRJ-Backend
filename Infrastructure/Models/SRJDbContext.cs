@@ -79,6 +79,8 @@ public partial class SRJDbContext : DbContext
 
     public virtual DbSet<Lunch> Lunches { get; set; }
 
+    public virtual DbSet<LunchAssignment> LunchAssignments { get; set; }
+
     public virtual DbSet<LunchCategory> LunchCategories { get; set; }
 
     public virtual DbSet<Payment> Payments { get; set; }
@@ -860,6 +862,59 @@ public partial class SRJDbContext : DbContext
                 .HasForeignKey(d => d.LunchCategoryId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("lunches_lunch_category_id_fkey");
+        });
+
+        modelBuilder.Entity<LunchAssignment>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("lunch_assignments_pkey");
+
+            entity.ToTable("lunch_assignments");
+
+            entity.HasIndex(e => e.AssignedDate, "lunch_assignments_assigned_date_idx");
+
+            entity.HasIndex(e => e.EnrollmentId, "lunch_assignments_enrollment_id_idx");
+
+            entity.HasIndex(e => e.HasDebt, "lunch_assignments_has_debt_idx").HasFilter("(has_debt = true)");
+
+            entity.HasIndex(e => e.LunchId, "lunch_assignments_lunch_id_idx");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.AssignedById).HasColumnName("assigned_by_id");
+            entity.Property(e => e.AssignedDate).HasColumnName("assigned_date");
+            entity.Property(e => e.DebtPaidAmount)
+                .HasPrecision(10, 2)
+                .HasColumnName("debt_paid_amount");
+            entity.Property(e => e.DebtPaidDate).HasColumnName("debt_paid_date");
+            entity.Property(e => e.EnrollmentId).HasColumnName("enrollment_id");
+            entity.Property(e => e.HasDebt)
+                .HasDefaultValue(false)
+                .HasColumnName("has_debt");
+            entity.Property(e => e.IsSettled)
+                .HasDefaultValue(false)
+                .HasColumnName("is_settled");
+            entity.Property(e => e.LunchId).HasColumnName("lunch_id");
+            entity.Property(e => e.PersonId).HasColumnName("person_id");
+            entity.Property(e => e.UnitPrice)
+                .HasPrecision(10, 2)
+                .HasColumnName("unit_price");
+
+            entity.HasOne(d => d.AssignedBy).WithMany(p => p.LunchAssignments)
+                .HasForeignKey(d => d.AssignedById)
+                .HasConstraintName("lunch_assignments_assigned_by_id_fkey");
+
+            entity.HasOne(d => d.Enrollment).WithMany(p => p.LunchAssignments)
+                .HasForeignKey(d => d.EnrollmentId)
+                .HasConstraintName("lunch_assignments_enrollment_id_fkey");
+
+            entity.HasOne(d => d.Lunch).WithMany(p => p.LunchAssignments)
+                .HasForeignKey(d => d.LunchId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("lunch_assignments_lunch_id_fkey");
+
+            entity.HasOne(d => d.Person).WithMany(p => p.LunchAssignments)
+                .HasForeignKey(d => d.PersonId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("lunch_assignments_person_id_fkey");
         });
 
         modelBuilder.Entity<LunchCategory>(entity =>

@@ -51,6 +51,8 @@ public partial class Person
 
     public virtual Gender Gender { get; set; } = null!;
 
+    public virtual ICollection<LunchAssignment> LunchAssignments { get; set; } = new List<LunchAssignment>();
+
     public virtual Language? NativeLanguage { get; set; }
 
     public virtual Religion? Religion { get; set; }

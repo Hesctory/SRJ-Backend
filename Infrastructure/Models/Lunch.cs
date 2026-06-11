@@ -17,5 +17,7 @@ public partial class Lunch
 
     public string? Comment { get; set; }
 
+    public virtual ICollection<LunchAssignment> LunchAssignments { get; set; } = new List<LunchAssignment>();
+
     public virtual LunchCategory LunchCategory { get; set; } = null!;
 }

@@ -31,6 +31,8 @@ public partial class Enrollment
 
     public virtual GradeOfferingShiftSection GradeOfferingShiftSection { get; set; } = null!;
 
+    public virtual ICollection<LunchAssignment> LunchAssignments { get; set; } = new List<LunchAssignment>();
+
     public virtual SchoolFeeConcept SchoolFeeConcept { get; set; } = null!;
 
     public virtual SchoolYear SchoolYear { get; set; } = null!;
