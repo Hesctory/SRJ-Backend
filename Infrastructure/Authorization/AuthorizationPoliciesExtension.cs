@@ -160,6 +160,16 @@ public static class AuthorizationPoliciesExtension
                 policy.Requirements.Add(new PermissionRequirement("lunch.update")));
             options.AddPolicy("lunch.delete", policy =>
                 policy.Requirements.Add(new PermissionRequirement("lunch.delete")));
+
+            options.AddPolicy("lunch-assignment.create", policy =>
+                policy.Requirements.Add(new PermissionRequirement("lunch-assignment.create")));
+            options.AddPolicy("lunch-assignment.read", policy =>
+                policy.Requirements.Add(new PermissionRequirement("lunch-assignment.read")));
+            options.AddPolicy("lunch-assignment.delete", policy =>
+                policy.Requirements.Add(new PermissionRequirement("lunch-assignment.delete")));
+
+            options.AddPolicy("lunch-payment.create", policy =>
+                policy.Requirements.Add(new PermissionRequirement("lunch-payment.create")));
         });
 
         return services;

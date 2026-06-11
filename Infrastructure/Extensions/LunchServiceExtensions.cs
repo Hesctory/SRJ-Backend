@@ -21,6 +21,12 @@ public static class LunchServiceExtensions
         services.AddScoped<UpdateLunchUseCase>();
         services.AddScoped<DeleteLunchUseCase>();
 
+        services.AddScoped<ILunchAssignmentRepository, LunchAssignmentRepository>();
+        services.AddScoped<ILunchAssignmentQueries, LunchAssignmentQueries>();
+        services.AddScoped<CreateLunchAssignmentUseCase>();
+        services.AddScoped<RecordLunchPaymentUseCase>();
+        services.AddScoped<DeleteLunchAssignmentUseCase>();
+
         return services;
     }
 }
