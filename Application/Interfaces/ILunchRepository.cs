@@ -1,11 +1,11 @@
-using SRJBackend.Application.DTOs;
+using SRJBackend.Domain.Entities;
 
 namespace SRJBackend.Application.Interfaces;
 
 public interface ILunchRepository
 {
-    Task<bool> ExistsAsync(int id);
-    Task<int> CreateAsync(CreateLunchDTO dto);
-    Task UpdateAsync(int id, CreateLunchDTO dto);
+    Task<DLunch?> GetByIdAsync(int id);
+    Task<int> CreateAsync(DLunch lunch);
+    Task UpdateAsync(DLunch lunch);
     Task<bool> DeleteAsync(int id);
 }

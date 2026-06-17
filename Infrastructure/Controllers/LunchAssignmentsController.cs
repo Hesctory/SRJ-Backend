@@ -93,8 +93,8 @@ public class LunchAssignmentsController : ControllerBase
         int? assignedById = int.TryParse(
             User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId) ? userId : null;
 
-        var id = await _createUseCase.ExecuteAsync(dto, assignedById);
-        return CreatedAtAction(nameof(GetById), new { id }, new { id });
+        var ids = await _createUseCase.ExecuteAsync(dto, assignedById);
+        return Created(string.Empty, new { ids });
     }
 
     [HttpDelete("{id:int}")]

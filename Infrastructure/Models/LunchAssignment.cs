@@ -27,6 +27,8 @@ public partial class LunchAssignment
 
     public DateOnly? DebtPaidDate { get; set; }
 
+    public int ShiftId { get; set; }
+
     public virtual User? AssignedBy { get; set; }
 
     public virtual Enrollment? Enrollment { get; set; }
@@ -34,4 +36,6 @@ public partial class LunchAssignment
     public virtual Lunch Lunch { get; set; } = null!;
 
     public virtual Person Person { get; set; } = null!;
+
+    public virtual Shift Shift { get; set; } = null!;
 }

@@ -894,6 +894,9 @@ public partial class SRJDbContext : DbContext
                 .HasColumnName("is_settled");
             entity.Property(e => e.LunchId).HasColumnName("lunch_id");
             entity.Property(e => e.PersonId).HasColumnName("person_id");
+            entity.Property(e => e.ShiftId)
+                .HasDefaultValue(1)
+                .HasColumnName("shift_id");
             entity.Property(e => e.UnitPrice)
                 .HasPrecision(10, 2)
                 .HasColumnName("unit_price");
@@ -915,6 +918,11 @@ public partial class SRJDbContext : DbContext
                 .HasForeignKey(d => d.PersonId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("lunch_assignments_person_id_fkey");
+
+            entity.HasOne(d => d.Shift).WithMany(p => p.LunchAssignments)
+                .HasForeignKey(d => d.ShiftId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("lunch_assignments_shift_id_fkey");
         });
 
         modelBuilder.Entity<LunchCategory>(entity =>

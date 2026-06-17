@@ -14,9 +14,10 @@ public class UpdateLunchUseCase
 
     public async Task ExecuteAsync(int id, CreateLunchDTO dto)
     {
-        if (!await _lunchRepository.ExistsAsync(id))
-            throw new KeyNotFoundException();
+        var lunch = await _lunchRepository.GetByIdAsync(id)
+            ?? throw new KeyNotFoundException();
 
-        await _lunchRepository.UpdateAsync(id, dto);
+        lunch.Update(dto.LunchCategoryId, dto.LunchName!, dto.CostPrice, dto.SalePrice, dto.Comment);
+        await _lunchRepository.UpdateAsync(lunch);
     }
 }

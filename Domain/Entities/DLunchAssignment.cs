@@ -9,6 +9,7 @@ public class DLunchAssignment
     public int? EnrollmentId { get; private set; }
     public int LunchId { get; private set; }
     public string? LunchName { get; private set; }
+    public int ShiftId { get; private set; }
     public DateOnly AssignedDate { get; private set; }
     public decimal UnitPrice { get; private set; }
     public int? AssignedById { get; private set; }
@@ -23,23 +24,32 @@ public class DLunchAssignment
     public bool IsPayable => HasDebt && !IsSettled && BalanceDue > 0;
 
     public static DLunchAssignment Create(
-        int personId, int? enrollmentId, int lunchId,
-        DateOnly assignedDate, decimal unitPrice, int? assignedById, bool isPaid)
+        int personId, int? enrollmentId, int lunchId, int shiftId,
+        DateOnly assignedDate, decimal unitPrice, int? assignedById, decimal? amountPaid)
     {
         if (personId <= 0)
             throw new ArgumentException("La persona indicada no es válida.");
         if (lunchId <= 0)
             throw new ArgumentException("El almuerzo indicado no es válido.");
+        if (shiftId <= 0)
+            throw new ArgumentException("El turno indicado no es válido.");
         if (assignedDate == default)
             throw new ArgumentException("La fecha de asignación es obligatoria.");
-        if (unitPrice <= 0)
+        if (unitPrice < 0)
             throw new DomainException("El precio del almuerzo debe ser mayor a cero.");
+        if (amountPaid is < 0)
+            throw new DomainException("El monto pagado no puede ser negativo.");
+        if (amountPaid > unitPrice)
+            throw new DomainException("El monto pagado no puede superar el precio del almuerzo.");
 
+        var paid = amountPaid ?? 0m;
         return new DLunchAssignment(
-            id: 0, personId, enrollmentId, lunchId, lunchName: null,
+            id: 0, personId, enrollmentId, lunchId, lunchName: null, shiftId,
             assignedDate, unitPrice, assignedById,
-            hasDebt: !isPaid, isSettled: false,
-            debtPaidAmount: null, debtPaidDate: null);
+            hasDebt: paid < unitPrice,
+            isSettled: paid >= unitPrice,
+            debtPaidAmount: paid > 0m ? paid : null,
+            debtPaidDate: paid > 0m ? assignedDate : null);
     }
 
     public decimal ApplyPayment(decimal available, DateOnly paymentDate)
@@ -53,15 +63,15 @@ public class DLunchAssignment
     }
 
     internal static DLunchAssignment Reconstitute(
-        int id, int personId, int? enrollmentId, int lunchId, string? lunchName,
+        int id, int personId, int? enrollmentId, int lunchId, string? lunchName, int shiftId,
         DateOnly assignedDate, decimal unitPrice, int? assignedById,
         bool hasDebt, bool isSettled, decimal? debtPaidAmount, DateOnly? debtPaidDate)
-        => new(id, personId, enrollmentId, lunchId, lunchName,
+        => new(id, personId, enrollmentId, lunchId, lunchName, shiftId,
             assignedDate, unitPrice, assignedById,
             hasDebt, isSettled, debtPaidAmount, debtPaidDate);
 
     private DLunchAssignment(
-        int id, int personId, int? enrollmentId, int lunchId, string? lunchName,
+        int id, int personId, int? enrollmentId, int lunchId, string? lunchName, int shiftId,
         DateOnly assignedDate, decimal unitPrice, int? assignedById,
         bool hasDebt, bool isSettled, decimal? debtPaidAmount, DateOnly? debtPaidDate)
     {
@@ -70,6 +80,7 @@ public class DLunchAssignment
         EnrollmentId = enrollmentId;
         LunchId = lunchId;
         LunchName = lunchName;
+        ShiftId = shiftId;
         AssignedDate = assignedDate;
         UnitPrice = unitPrice;
         AssignedById = assignedById;

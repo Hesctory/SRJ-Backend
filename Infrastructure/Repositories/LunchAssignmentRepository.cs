@@ -21,6 +21,7 @@ public class LunchAssignmentRepository : ILunchAssignmentRepository
             PersonId = assignment.PersonId,
             EnrollmentId = assignment.EnrollmentId,
             LunchId = assignment.LunchId,
+            ShiftId = assignment.ShiftId,
             AssignedDate = assignment.AssignedDate,
             UnitPrice = assignment.UnitPrice,
             AssignedById = assignment.AssignedById,
@@ -32,6 +33,28 @@ public class LunchAssignmentRepository : ILunchAssignmentRepository
         _context.LunchAssignments.Add(efAssignment);
         await _context.SaveChangesAsync();
         return efAssignment.Id;
+    }
+
+    public async Task<List<int>> CreateManyAsync(IEnumerable<DLunchAssignment> assignments)
+    {
+        var efAssignments = assignments.Select(a => new LunchAssignment
+        {
+            PersonId = a.PersonId,
+            EnrollmentId = a.EnrollmentId,
+            LunchId = a.LunchId,
+            ShiftId = a.ShiftId,
+            AssignedDate = a.AssignedDate,
+            UnitPrice = a.UnitPrice,
+            AssignedById = a.AssignedById,
+            HasDebt = a.HasDebt,
+            IsSettled = a.IsSettled,
+            DebtPaidAmount = a.DebtPaidAmount,
+            DebtPaidDate = a.DebtPaidDate
+        }).ToList();
+
+        _context.LunchAssignments.AddRange(efAssignments);
+        await _context.SaveChangesAsync();
+        return efAssignments.Select(a => a.Id).ToList();
     }
 
     public async Task<DLunchAssignment?> GetByIdAsync(int id)
@@ -88,9 +111,12 @@ public class LunchAssignmentRepository : ILunchAssignmentRepository
     public async Task<bool> EnrollmentBelongsToPersonAsync(int enrollmentId, int personId)
         => await _context.Enrollments.AnyAsync(e => e.Id == enrollmentId && e.StudentId == personId);
 
+    public async Task<bool> ShiftExistsAsync(int shiftId)
+        => await _context.Shifts.AnyAsync(s => s.Id == shiftId);
+
     private static DLunchAssignment Reconstitute(LunchAssignment row)
         => DLunchAssignment.Reconstitute(
-            row.Id, row.PersonId, row.EnrollmentId, row.LunchId, row.Lunch.LunchName,
+            row.Id, row.PersonId, row.EnrollmentId, row.LunchId, row.Lunch.LunchName, row.ShiftId,
             row.AssignedDate, row.UnitPrice, row.AssignedById,
             row.HasDebt, row.IsSettled, row.DebtPaidAmount, row.DebtPaidDate);
 }

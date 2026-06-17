@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using SRJBackend.Application.DTOs;
 using SRJBackend.Application.Interfaces;
+using SRJBackend.Domain.Entities;
 using SRJBackend.Infrastructure.Models;
 
 namespace SRJBackend.Infrastructure.Repositories;
@@ -14,34 +14,36 @@ public class LunchRepository : ILunchRepository
         _context = context;
     }
 
-    public async Task<bool> ExistsAsync(int id)
+    public async Task<DLunch?> GetByIdAsync(int id)
     {
-        return await _context.Lunches.AnyAsync(x => x.Id == id);
+        var entity = await _context.Lunches.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
+        if (entity is null) return null;
+        return DLunch.Reconstitute(entity.Id, entity.LunchCategoryId, entity.LunchName!, entity.CostPrice, entity.SalePrice, entity.Comment);
     }
 
-    public async Task<int> CreateAsync(CreateLunchDTO dto)
+    public async Task<int> CreateAsync(DLunch lunch)
     {
         var entity = new Lunch
         {
-            LunchCategoryId = dto.LunchCategoryId,
-            LunchName = dto.LunchName,
-            CostPrice = dto.CostPrice,
-            SalePrice = dto.SalePrice,
-            Comment = dto.Comment
+            LunchCategoryId = lunch.LunchCategoryId,
+            LunchName = lunch.LunchName,
+            CostPrice = lunch.CostPrice,
+            SalePrice = lunch.SalePrice,
+            Comment = lunch.Comment
         };
         _context.Lunches.Add(entity);
         await _context.SaveChangesAsync();
         return entity.Id;
     }
 
-    public async Task UpdateAsync(int id, CreateLunchDTO dto)
+    public async Task UpdateAsync(DLunch lunch)
     {
-        var entity = await _context.Lunches.FindAsync(id);
-        entity!.LunchCategoryId = dto.LunchCategoryId;
-        entity.LunchName = dto.LunchName;
-        entity.CostPrice = dto.CostPrice;
-        entity.SalePrice = dto.SalePrice;
-        entity.Comment = dto.Comment;
+        var entity = await _context.Lunches.FindAsync(lunch.Id);
+        entity!.LunchCategoryId = lunch.LunchCategoryId;
+        entity.LunchName = lunch.LunchName;
+        entity.CostPrice = lunch.CostPrice;
+        entity.SalePrice = lunch.SalePrice;
+        entity.Comment = lunch.Comment;
         await _context.SaveChangesAsync();
     }
 

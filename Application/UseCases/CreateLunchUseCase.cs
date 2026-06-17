@@ -1,5 +1,6 @@
 using SRJBackend.Application.DTOs;
 using SRJBackend.Application.Interfaces;
+using SRJBackend.Domain.Entities;
 
 namespace SRJBackend.Application.UseCases;
 
@@ -14,6 +15,7 @@ public class CreateLunchUseCase
 
     public async Task<int> ExecuteAsync(CreateLunchDTO dto)
     {
-        return await _lunchRepository.CreateAsync(dto);
+        var lunch = DLunch.Create(dto.LunchCategoryId, dto.LunchName!, dto.CostPrice, dto.SalePrice, dto.Comment);
+        return await _lunchRepository.CreateAsync(lunch);
     }
 }
