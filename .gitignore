@@ -482,3 +482,10 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Project-specific ignores
+CLAUDE.md
+enrollment-payments-backend-contract.md
+plan.md
+prompt.txt
+.claude/
