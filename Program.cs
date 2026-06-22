@@ -8,6 +8,11 @@ using SRJBackend.Infrastructure.Authorization;
 using SRJBackend.Infrastructure.Extensions;
 using SRJBackend.Infrastructure.Models;
 
+// Load secrets from a local, gitignored .env file (dev). In production the
+// host supplies these as real environment variables, so .env is optional.
+if (File.Exists(".env"))
+    DotNetEnv.Env.Load();
+
 var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.UseUrls("http://localhost:4000");
 
