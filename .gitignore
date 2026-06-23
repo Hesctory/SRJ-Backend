@@ -489,3 +489,12 @@ enrollment-payments-backend-contract.md
 plan.md
 prompt.txt
 .claude/
+
+# Local dev notes / scratch references (may contain real data)
+references/
+
+# Claude Code skills lockfile
+skills-lock.json
+
+# IDE caches
+*.lscache
