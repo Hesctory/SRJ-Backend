@@ -6,6 +6,14 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <!-- The time-simulator console lives under tools/ and is its own project; keep its
+       sources out of this Web project's default recursive .cs glob. -->
+  <ItemGroup>
+    <Compile Remove="tools/**/*.cs" />
+    <Content Remove="tools/**/*" />
+    <None Remove="tools/**/*" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Audit.NET" Version="32.0.0" />
     <PackageReference Include="DotNetEnv" Version="3.2.0" />

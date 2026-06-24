@@ -13,6 +13,7 @@ public class CreateStudentUseCase
     private readonly IFamiliarRepository _familiarRepository;
     private readonly IEnrollmentRepository _enrollmentRepository;
     private readonly IGradeOfferingShiftSectionRepository _sectionRepository;
+    private readonly GenerateEnrollmentChargesUseCase _generateCharges;
     private readonly IUnitOfWork _unitOfWork;
 
     public CreateStudentUseCase(
@@ -21,6 +22,7 @@ public class CreateStudentUseCase
         IFamiliarRepository familiarRepository,
         IEnrollmentRepository enrollmentRepository,
         IGradeOfferingShiftSectionRepository sectionRepository,
+        GenerateEnrollmentChargesUseCase generateCharges,
         IUnitOfWork unitOfWork)
     {
         _personRepository = personRepository;
@@ -28,6 +30,7 @@ public class CreateStudentUseCase
         _familiarRepository = familiarRepository;
         _enrollmentRepository = enrollmentRepository;
         _sectionRepository = sectionRepository;
+        _generateCharges = generateCharges;
         _unitOfWork = unitOfWork;
     }
 
@@ -69,7 +72,10 @@ public class CreateStudentUseCase
                 await _familiarRepository.CreateRelationshipAsync(familiar, familiarPersonId, personId);
             }
             var placement = new AcademicPlacement(enrollmentDto.LevelId, enrollmentDto.GradeId, enrollmentDto.ShiftId, sectionId.Value);
-            await _enrollmentRepository.CreateAsync(personId, placement, enrollmentDto.SchoolFeeConceptId, enrollmentDto.SchoolYearId, enrollmentDto.PreviousSchool, isNew: true);
+            var enrollment = await _enrollmentRepository.CreateAsync(personId, placement, enrollmentDto.SchoolFeeConceptId, enrollmentDto.SchoolYearId, enrollmentDto.PreviousSchool, isNew: true);
+
+            // First-time enrollment → admission + enrollment debts.
+            await _generateCharges.ExecuteAsync(enrollment, isNew: true, createdBy: null);
 
             await _unitOfWork.CommitAsync();
             return personId;

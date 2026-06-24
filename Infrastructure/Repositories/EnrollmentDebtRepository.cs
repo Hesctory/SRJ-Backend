@@ -9,10 +9,12 @@ namespace SRJBackend.Infrastructure.Repositories;
 public class EnrollmentDebtRepository : IEnrollmentDebtRepository
 {
     private readonly SRJDbContext _context;
+    private readonly IClock _clock;
 
-    public EnrollmentDebtRepository(SRJDbContext context)
+    public EnrollmentDebtRepository(SRJDbContext context, IClock clock)
     {
         _context = context;
+        _clock = clock;
     }
 
     public async Task<List<DDebt>> GetPayableDebtsAsync(int enrollmentId, long? debtId)
@@ -43,5 +45,47 @@ public class EnrollmentDebtRepository : IEnrollmentDebtRepository
             DebtStatusCodes.ToEnum(d.StatusCode!),
             d.DueDate!.Value))
             .ToList();
+    }
+
+    public async Task AddRangeAsync(IEnumerable<DDebt> debts, int? createdBy)
+    {
+        var list = debts.ToList();
+        if (list.Count == 0) return;
+
+        var chargeTypeIds = await _context.ChargeTypes
+            .ToDictionaryAsync(c => c.Code, c => c.Id);
+        var statusIds = await _context.DebtStatuses
+            .ToDictionaryAsync(s => s.Code, s => s.Id);
+
+        var now = _clock.UtcNow;
+
+        foreach (var debt in list)
+        {
+            _context.EnrollmentDebts.Add(new EnrollmentDebt
+            {
+                StudentId = debt.StudentId,
+                EnrollmentId = debt.EnrollmentId,
+                SchoolYearId = debt.SchoolYearId,
+                ChargeTypeId = chargeTypeIds[debt.ChargeTypeCode],
+                Amount = debt.Amount,
+                Description = debt.Description,
+                DueDate = debt.DueDate,
+                PeriodMonth = debt.PeriodMonth,
+                StatusId = statusIds[DebtStatusCodes.FromEnum(debt.Status)],
+                CreatedAt = now,
+                UpdatedAt = now,
+                CreatedBy = createdBy,
+            });
+        }
+
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task<bool> ChargeExistsAsync(int enrollmentId, string chargeTypeCode, short? periodMonth)
+    {
+        return await _context.EnrollmentDebts.AnyAsync(d =>
+            d.EnrollmentId == enrollmentId
+            && d.ChargeType.Code == chargeTypeCode
+            && d.PeriodMonth == periodMonth);
     }
 }

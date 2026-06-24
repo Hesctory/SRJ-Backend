@@ -10,17 +10,20 @@ public class CreateEnrollmentUseCase
     private readonly IEnrollmentRepository _enrollmentRepository;
     private readonly IEnrollmentQueries _enrollmentQueries;
     private readonly IGradeOfferingShiftSectionRepository _sectionRepository;
+    private readonly GenerateEnrollmentChargesUseCase _generateCharges;
     private readonly IUnitOfWork _unitOfWork;
 
     public CreateEnrollmentUseCase(
         IEnrollmentRepository enrollmentRepository,
         IEnrollmentQueries enrollmentQueries,
         IGradeOfferingShiftSectionRepository sectionRepository,
+        GenerateEnrollmentChargesUseCase generateCharges,
         IUnitOfWork unitOfWork)
     {
         _enrollmentRepository = enrollmentRepository;
         _enrollmentQueries = enrollmentQueries;
         _sectionRepository = sectionRepository;
+        _generateCharges = generateCharges;
         _unitOfWork = unitOfWork;
     }
 
@@ -44,6 +47,9 @@ public class CreateEnrollmentUseCase
         {
             var enrollment = await _enrollmentRepository.CreateAsync(
                 dto.StudentId, placement, dto.SchoolFeeConceptId, dto.SchoolYearId, dto.PreviousSchool, isNew: !hasValid);
+
+            // Re-enrollment → enrollment debt only (admission only when isNew, i.e. no prior valid enrollment).
+            await _generateCharges.ExecuteAsync(enrollment, isNew: !hasValid, createdBy: null);
 
             await _unitOfWork.CommitAsync();
             return enrollment;

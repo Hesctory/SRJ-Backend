@@ -103,6 +103,59 @@ dotnet ef dbcontext scaffold "Name=ConnectionStrings:DefaultConnection" \
 Always use the `Name=` form so the connection string / password is read from
 configuration at design time and never written into source.
 
+## Automatic debt generation & the time simulator
+
+Debts are generated automatically by the application:
+
+- **On enrollment** — creating a student (first enrollment) generates the
+  **admission** and **enrollment** debts; re-enrolling an existing student
+  generates the **enrollment** debt only.
+- **Monthly tuition** — a background scheduler generates the current month's
+  **tuition** debt for every active enrollment in the current school year. It
+  runs as a daily, idempotent tick (a no-op once that month's debts exist), so
+  it self-heals after downtime. It is configured in `appsettings.json`:
+
+  ```json
+  "TuitionScheduler": { "Enabled": true, "IntervalHours": 24 }
+  ```
+
+Time is abstracted behind an `IClock`. The running API uses the real clock, so
+you would normally have to wait for a real month boundary to see tuition
+generated. To exercise the monthly logic on demand, a **virtual clock** console
+lets you fast-forward through a school year and run generation at each step.
+
+### Running the time simulator
+
+The simulator lives in `tools/SRJBackend.TimeSimulator`. It reuses the API's
+database connection (the same `.env` / `appsettings.json`), so no extra
+configuration is needed — just make sure the database is provisioned.
+
+```bash
+# from the repo root
+dotnet run --project tools/SRJBackend.TimeSimulator
+```
+
+It starts an interactive prompt with a virtual clock set to today. You advance
+the clock yourself and trigger generation:
+
+```
+Commands:
+  now            show the current virtual date
+  +1d [N]        advance the virtual clock by N days (default 1)
+  +1m [N]        advance the virtual clock by N months (default 1)
+  run            generate this month's tuition for active enrollments
+  auto [N]       run + advance one month, repeated N times (default 1)
+  help           show this help
+  quit           exit
+```
+
+For example, `run` then `+1m` repeatedly (or `auto 10`) walks through the school
+year and creates one tuition debt per active enrollment per month. Re-running at
+the same date is idempotent, and non-academic months (Jan/Feb) generate nothing.
+
+> The simulator writes to the **same database** the API uses. Point your `.env`
+> at a development database when using it.
+
 ## Configuration & secrets
 
 Secrets are **not** committed. The app reads them from a local `.env` file

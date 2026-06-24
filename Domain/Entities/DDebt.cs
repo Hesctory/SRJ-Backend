@@ -1,3 +1,6 @@
+using SRJBackend.Domain.Constants;
+using SRJBackend.Domain.Exceptions;
+
 namespace SRJBackend.Domain.Entities;
 
 public class DDebt
@@ -8,6 +11,45 @@ public class DDebt
     public decimal BalanceDue { get; private set; }
     public DebtStatus Status { get; private set; }
     public DateOnly DueDate { get; private set; }
+
+    // Fields below are only populated for newly-created debts (via Create) and are
+    // used by the repository when persisting. They stay at defaults on the payment
+    // read path (Reconstitute), which never needs them.
+    public int StudentId { get; private set; }
+    public int SchoolYearId { get; private set; }
+    public string ChargeTypeCode { get; private set; } = "";
+    public decimal Amount { get; private set; }
+    public short? PeriodMonth { get; private set; }
+
+    /// <summary>
+    /// Creates a brand-new, unpaid debt to be persisted. Status is derived from the due
+    /// date relative to <paramref name="asOf"/> (OVERDUE if already past, else PENDING),
+    /// mirroring <c>database/backfill_enrollment_debts.sql</c>.
+    /// </summary>
+    public static DDebt Create(
+        int studentId, int enrollmentId, int schoolYearId, string chargeTypeCode,
+        decimal amount, string description, DateOnly dueDate, short? periodMonth, DateOnly asOf)
+    {
+        if (amount <= 0)
+            throw new DomainException("El monto de la deuda debe ser mayor a cero.");
+
+        if (chargeTypeCode == ChargeTypeCodes.Tuition && periodMonth is null)
+            throw new DomainException("Las deudas de pensión requieren un mes (period_month).");
+
+        if (chargeTypeCode != ChargeTypeCodes.Tuition && periodMonth is not null)
+            throw new DomainException("Solo las deudas de pensión pueden tener un mes (period_month).");
+
+        var status = dueDate < asOf ? DebtStatus.Overdue : DebtStatus.Pending;
+
+        return new DDebt(0, enrollmentId, description, amount, status, dueDate)
+        {
+            StudentId = studentId,
+            SchoolYearId = schoolYearId,
+            ChargeTypeCode = chargeTypeCode,
+            Amount = amount,
+            PeriodMonth = periodMonth,
+        };
+    }
 
     public bool IsPayable =>
         Status is DebtStatus.Pending or DebtStatus.PartiallyPaid or DebtStatus.Overdue
