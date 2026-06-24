@@ -126,12 +126,10 @@ lets you fast-forward through a school year and run generation at each step.
 
 ### Running the time simulator
 
-The simulator lives in `tools/SRJBackend.TimeSimulator`. It reuses the API's
-database connection (the same `.env` / `appsettings.json`), so no extra
-configuration is needed — just make sure the database is provisioned.
+The simulator lives in `tools/SRJBackend.TimeSimulator`. Make sure the database
+is provisioned, then run it from the repo root:
 
 ```bash
-# from the repo root
 dotnet run --project tools/SRJBackend.TimeSimulator
 ```
 
