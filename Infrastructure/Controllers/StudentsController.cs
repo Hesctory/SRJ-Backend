@@ -71,6 +71,32 @@ public class StudentsController : ControllerBase
         }
     }
 
+    [HttpGet("registration-card")]
+    [Authorize(Policy = "student.read")]
+    public async Task<IActionResult> GetRegistrationCard(
+        [FromQuery] int? schoolYearId = null,
+        [FromQuery] int? levelId = null,
+        [FromQuery] int? gradeId = null,
+        [FromQuery] int? shiftId = null,
+        [FromQuery] int? sectionId = null,
+        [FromQuery] string? studentIds = null)
+    {
+        List<int>? parsedStudentIds = null;
+        if (!string.IsNullOrWhiteSpace(studentIds))
+        {
+            parsedStudentIds = studentIds
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(s => int.TryParse(s, out var n) ? n : (int?)null)
+                .Where(n => n.HasValue)
+                .Select(n => n!.Value)
+                .ToList();
+        }
+
+        var items = await _studentQueries.GetRegistrationCardAsync(
+            schoolYearId, levelId, gradeId, shiftId, sectionId, parsedStudentIds);
+        return Ok(items);
+    }
+
     [HttpGet("report")]
     [Authorize(Policy = "student.read")]
     public async Task<IActionResult> GetReport(
@@ -81,6 +107,19 @@ public class StudentsController : ControllerBase
         [FromQuery] int? sectionId = null)
     {
         var items = await _studentQueries.GetReportAsync(schoolYearId, levelId, gradeId, shiftId, sectionId);
+        return Ok(items);
+    }
+
+    [HttpGet("birthdays")]
+    [Authorize(Policy = "student.read")]
+    public async Task<IActionResult> GetBirthdays(
+        [FromQuery] int? schoolYearId = null,
+        [FromQuery] int? levelId = null,
+        [FromQuery] int? gradeId = null,
+        [FromQuery] int? shiftId = null,
+        [FromQuery] int? sectionId = null)
+    {
+        var items = await _studentQueries.GetBirthdaysAsync(schoolYearId, levelId, gradeId, shiftId, sectionId);
         return Ok(items);
     }
 

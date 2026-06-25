@@ -116,6 +116,167 @@ public class StudentQueries : IStudentQueries
             .ToListAsync();
     }
 
+    public async Task<List<StudentBirthdayDTO>> GetBirthdaysAsync(
+        int? schoolYearId, int? levelId, int? gradeId, int? shiftId, int? sectionId)
+    {
+        var query = _context.Enrollments.AsNoTracking().AsQueryable();
+
+        if (schoolYearId.HasValue)
+            query = query.Where(e => e.SchoolYearId == schoolYearId.Value);
+        if (levelId.HasValue)
+            query = query.Where(e => e.GradeOfferingShiftSection.GradeOfferingShift.GradeOffering.Grade.LevelId == levelId.Value);
+        if (gradeId.HasValue)
+            query = query.Where(e => e.GradeOfferingShiftSection.GradeOfferingShift.GradeOffering.GradeId == gradeId.Value);
+        if (shiftId.HasValue)
+            query = query.Where(e => e.GradeOfferingShiftSection.GradeOfferingShift.ShiftId == shiftId.Value);
+        if (sectionId.HasValue)
+            query = query.Where(e => e.GradeOfferingShiftSectionId == sectionId.Value);
+
+        var rows = await query
+            .Select(e => new
+            {
+                e.StudentId,
+                DocumentNumber = e.Student!.Person.IdDocumentNumber,
+                e.Student!.Person.PaternalLastname,
+                e.Student!.Person.MaternalLastname,
+                e.Student!.Person.Names,
+                Level = e.GradeOfferingShiftSection.GradeOfferingShift.GradeOffering.Grade.Level.Name,
+                GradeYear = e.GradeOfferingShiftSection.GradeOfferingShift.GradeOffering.Grade.Year,
+                Shift = e.GradeOfferingShiftSection.GradeOfferingShift.Shift.Name,
+                Section = e.GradeOfferingShiftSection.Section,
+                e.Student!.Person.BirthDate
+            })
+            .ToListAsync();
+
+        return rows
+            .Select(r => new StudentBirthdayDTO
+            {
+                Id = r.StudentId,
+                DocumentNumber = r.DocumentNumber,
+                FullName = $"{r.PaternalLastname} {r.MaternalLastname}, {r.Names}".Trim(),
+                Level = r.Level,
+                GradeYear = r.GradeYear.ToString(),
+                Section = r.Section?.ToString(),
+                Shift = r.Shift,
+                BirthDate = r.BirthDate.ToString("yyyy-MM-dd")
+            })
+            .ToList();
+    }
+
+    public async Task<List<RegistrationCardDTO>> GetRegistrationCardAsync(
+        int? schoolYearId, int? levelId, int? gradeId, int? shiftId, int? sectionId,
+        List<int>? studentIds)
+    {
+        var query = _context.Enrollments.AsNoTracking().AsQueryable();
+
+        if (schoolYearId.HasValue)
+            query = query.Where(e => e.SchoolYearId == schoolYearId.Value);
+        if (levelId.HasValue)
+            query = query.Where(e => e.GradeOfferingShiftSection.GradeOfferingShift.GradeOffering.Grade.LevelId == levelId.Value);
+        if (gradeId.HasValue)
+            query = query.Where(e => e.GradeOfferingShiftSection.GradeOfferingShift.GradeOffering.GradeId == gradeId.Value);
+        if (shiftId.HasValue)
+            query = query.Where(e => e.GradeOfferingShiftSection.GradeOfferingShift.ShiftId == shiftId.Value);
+        if (sectionId.HasValue)
+            query = query.Where(e => e.GradeOfferingShiftSectionId == sectionId.Value);
+        if (studentIds != null && studentIds.Count > 0)
+            query = query.Where(e => studentIds.Contains(e.StudentId));
+
+        return await query.Select(e => new RegistrationCardDTO
+        {
+            id = e.StudentId,
+            enrollmentCode = e.Code,
+            enrollmentDate = e.EnrollmentDate != null ? e.EnrollmentDate.Value.ToString() : null,
+            schoolYear = e.SchoolYear.Year.ToString(),
+            level = e.GradeOfferingShiftSection.GradeOfferingShift.GradeOffering.Grade.Level.Name,
+            grade = e.GradeOfferingShiftSection.GradeOfferingShift.GradeOffering.Grade.Name,
+            section = e.GradeOfferingShiftSection.Section != null
+                ? e.GradeOfferingShiftSection.Section.Value.ToString()
+                : null,
+            shift = e.GradeOfferingShiftSection.GradeOfferingShift.Shift.Name,
+            paternalLastName = e.Student.Person.PaternalLastname,
+            maternalLastName = e.Student.Person.MaternalLastname,
+            firstName = e.Student.Person.Names,
+            birthDate = e.Student.Person.BirthDate.ToString(),
+            birthPlace = e.Student.BirthUbigeo.District.Name,
+            birthCountry = "Perú",
+            gender = e.Student.Person.Gender.Name,
+            religion = e.Student.Person.Religion != null ? e.Student.Person.Religion.Name : null,
+            dni = e.Student.Person.IdDocumentNumber,
+            siblings = (int?)e.Student.Siblings,
+            siblingPosition = (int?)e.Student.BirthOrder,
+            disability = e.Student.HasDisability
+                ? (e.Student.Disability != null && e.Student.Disability.DisabilityType != null
+                    ? e.Student.Disability.DisabilityType.Type
+                    : "Sí")
+                : "Ninguna",
+            previousSchool = e.PreviousSchool,
+            address = e.Student.Person.Address,
+            district = e.Student.Person.AddressUbigeo.District.Name,
+            mother = e.Student.FamiliarStudentRelationships
+                .Where(fsr => fsr.FamiliarRelationshipType.Name == "MADRE")
+                .Select(fsr => new RegistrationCardParentDTO
+                {
+                    paternalLastName = fsr.Familiar.Person.PaternalLastname,
+                    maternalLastName = fsr.Familiar.Person.MaternalLastname,
+                    firstName = fsr.Familiar.Person.Names,
+                    dni = fsr.Familiar.Person.IdDocumentNumber,
+                    phone = fsr.Familiar.Person.CellPhone != null
+                        ? fsr.Familiar.Person.CellPhone
+                        : fsr.Familiar.Person.LandlinePhone,
+                    email = fsr.Familiar.Person.Email,
+                    educationLevel = fsr.Familiar.LevelOfEducation != null ? fsr.Familiar.LevelOfEducation.Name : null,
+                    occupation = fsr.Familiar.Occupation,
+                    maritalStatus = fsr.Familiar.Person.CivilState != null ? fsr.Familiar.Person.CivilState.Name : null
+                })
+                .FirstOrDefault(),
+            father = e.Student.FamiliarStudentRelationships
+                .Where(fsr => fsr.FamiliarRelationshipType.Name == "PADRE")
+                .Select(fsr => new RegistrationCardParentDTO
+                {
+                    paternalLastName = fsr.Familiar.Person.PaternalLastname,
+                    maternalLastName = fsr.Familiar.Person.MaternalLastname,
+                    firstName = fsr.Familiar.Person.Names,
+                    dni = fsr.Familiar.Person.IdDocumentNumber,
+                    phone = fsr.Familiar.Person.CellPhone != null
+                        ? fsr.Familiar.Person.CellPhone
+                        : fsr.Familiar.Person.LandlinePhone,
+                    email = fsr.Familiar.Person.Email,
+                    educationLevel = fsr.Familiar.LevelOfEducation != null ? fsr.Familiar.LevelOfEducation.Name : null,
+                    occupation = fsr.Familiar.Occupation,
+                    maritalStatus = fsr.Familiar.Person.CivilState != null ? fsr.Familiar.Person.CivilState.Name : null
+                })
+                .FirstOrDefault(),
+            guardian = e.Student.FamiliarStudentRelationships
+                .Where(fsr => fsr.Isguardian)
+                .Select(fsr => new RegistrationCardGuardianDTO
+                {
+                    relationship = fsr.FamiliarRelationshipType.Name,
+                    paternalLastName = fsr.Familiar.Person.PaternalLastname,
+                    maternalLastName = fsr.Familiar.Person.MaternalLastname,
+                    firstName = fsr.Familiar.Person.Names,
+                    dni = fsr.Familiar.Person.IdDocumentNumber,
+                    phone = fsr.Familiar.Person.CellPhone != null
+                        ? fsr.Familiar.Person.CellPhone
+                        : fsr.Familiar.Person.LandlinePhone,
+                    email = fsr.Familiar.Person.Email
+                })
+                .FirstOrDefault(),
+            fees = e.SchoolFeeConcept.SchoolFees
+                .Where(sf => sf.SchoolYearId == e.SchoolYearId
+                    && sf.ShiftId == e.GradeOfferingShiftSection.GradeOfferingShift.ShiftId
+                    && sf.LevelId == e.GradeOfferingShiftSection.GradeOfferingShift.GradeOffering.Grade.LevelId)
+                .Select(sf => new RegistrationCardFeesDTO
+                {
+                    registrationFee = sf.RegistrationFee,
+                    enrollmentFee = sf.EnrollmentPrice,
+                    tuition = sf.TuitionCost
+                })
+                .FirstOrDefault() ?? new RegistrationCardFeesDTO()
+        })
+        .ToListAsync();
+    }
+
     private static StudentDetailDTO MapToDTO(Student s)
     {
         var person = s.Person;
