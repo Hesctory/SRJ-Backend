@@ -186,7 +186,7 @@ public class StudentQueries : IStudentQueries
         {
             id = e.StudentId,
             enrollmentCode = e.Code,
-            enrollmentDate = e.EnrollmentDate != null ? e.EnrollmentDate.Value.ToString() : null,
+            enrollmentDate = e.EnrollmentDate.ToString(),
             schoolYear = e.SchoolYear.Year.ToString(),
             level = e.GradeOfferingShiftSection.GradeOfferingShift.GradeOffering.Grade.Level.Name,
             grade = e.GradeOfferingShiftSection.GradeOfferingShift.GradeOffering.Grade.Name,

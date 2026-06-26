@@ -21,7 +21,7 @@ public partial class Enrollment
 
     public int SchoolYearId { get; set; }
 
-    public DateOnly? EnrollmentDate { get; set; }
+    public DateOnly EnrollmentDate { get; set; }
 
     public int StateId { get; set; }
 

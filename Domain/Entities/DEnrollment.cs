@@ -12,6 +12,7 @@ public class DEnrollment
     public int SchoolFeeConceptId { get; private set; }
     public int SchoolYearId { get; private set; }
     public string? PreviousSchool { get; private set; }
+    public DateOnly EnrollmentDate { get; private set; }
     public EnrollmentStatus Status { get; private set; }
 
     public static DEnrollment Create(
@@ -20,7 +21,8 @@ public class DEnrollment
         AcademicPlacement placement,
         int schoolFeeConceptId,
         DSchoolYear schoolYear,
-        string? previousSchool)
+        string? previousSchool,
+        DateOnly? enrollmentDate = null)
     {
         if (studentId <= 0)
             throw new ArgumentException("El identificador del estudiante es inválido.", nameof(studentId));
@@ -29,7 +31,7 @@ public class DEnrollment
         if (!schoolYear.IsActive)
             throw new DomainException("No se puede matricular en un año escolar que no está activo.");
 
-        return new DEnrollment(0, code, studentId, placement, schoolFeeConceptId, schoolYear.Id, previousSchool, EnrollmentStatus.Active);
+        return new DEnrollment(0, code, studentId, placement, schoolFeeConceptId, schoolYear.Id, previousSchool, enrollmentDate ?? DateOnly.FromDateTime(DateTime.Today), EnrollmentStatus.Active);
     }
 
     public void Update(AcademicPlacement placement, int schoolFeeConceptId, DSchoolYear schoolYear, string? previousSchool)
@@ -75,8 +77,9 @@ public class DEnrollment
         int schoolFeeConceptId,
         int schoolYearId,
         string? previousSchool,
+        DateOnly enrollmentDate,
         EnrollmentStatus status)
-        => new DEnrollment(id, code, studentId, placement, schoolFeeConceptId, schoolYearId, previousSchool, status);
+        => new DEnrollment(id, code, studentId, placement, schoolFeeConceptId, schoolYearId, previousSchool, enrollmentDate, status);
 
     private DEnrollment(
         int id,
@@ -86,6 +89,7 @@ public class DEnrollment
         int schoolFeeConceptId,
         int schoolYearId,
         string? previousSchool,
+        DateOnly enrollmentDate,
         EnrollmentStatus status)
     {
         Id = id;
@@ -95,6 +99,7 @@ public class DEnrollment
         SchoolFeeConceptId = schoolFeeConceptId;
         SchoolYearId = schoolYearId;
         PreviousSchool = previousSchool;
+        EnrollmentDate = enrollmentDate;
         Status = status;
     }
 }

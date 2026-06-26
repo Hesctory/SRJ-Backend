@@ -40,6 +40,7 @@ public class EnrollmentRepository : IEnrollmentRepository
             SchoolFeeConceptId = domain.SchoolFeeConceptId,
             SchoolYearId = domain.SchoolYearId,
             PreviousSchool = domain.PreviousSchool,
+            EnrollmentDate = domain.EnrollmentDate,
             Isnew = isNew
         };
 
@@ -48,7 +49,7 @@ public class EnrollmentRepository : IEnrollmentRepository
 
         return DEnrollment.Reconstitute(enrollment.Id, enrollmentCode, studentId, placement,
             enrollment.SchoolFeeConceptId, enrollment.SchoolYearId, enrollment.PreviousSchool,
-            EnrollmentStatus.Active);
+            enrollment.EnrollmentDate, EnrollmentStatus.Active);
     }
 
     public async Task<List<DEnrollment>> GetByStudentIdAsync(int studentId)
@@ -165,6 +166,7 @@ public class EnrollmentRepository : IEnrollmentRepository
                 EfModel = e,
                 SyId = sy.Id, SyYear = sy.Year, SyStart = sy.StartDate, SyEnd = sy.EndDate, SyActive = sy.IsActive,
                 LevelId = g.LevelId, GradeId = go.GradeId, ShiftId = gs.ShiftId, SectionId = s.Id,
+                EnrollmentDate = e.EnrollmentDate,
                 StateName = st.Name ?? string.Empty
             }
         ).FirstOrDefaultAsync();
@@ -185,6 +187,7 @@ public class EnrollmentRepository : IEnrollmentRepository
             SchoolFeeConceptId = row.EfModel.SchoolFeeConceptId,
             SchoolYearId = row.EfModel.SchoolYearId,
             PreviousSchool = row.EfModel.PreviousSchool,
+            EnrollmentDate = row.EnrollmentDate,
             StateName = row.StateName
         };
 
@@ -221,6 +224,7 @@ public class EnrollmentRepository : IEnrollmentRepository
             SchoolFeeConceptId = e.SchoolFeeConceptId,
             SchoolYearId = e.SchoolYearId,
             PreviousSchool = e.PreviousSchool,
+            EnrollmentDate = e.EnrollmentDate,
             StateName = st.Name ?? string.Empty
         };
 
@@ -233,6 +237,7 @@ public class EnrollmentRepository : IEnrollmentRepository
             r.SchoolFeeConceptId,
             r.SchoolYearId,
             r.PreviousSchool,
+            r.EnrollmentDate,
             r.StateName switch
             {
                 EnrollmentStateNames.Cancelled  => EnrollmentStatus.Cancelled,
@@ -254,6 +259,7 @@ public class EnrollmentRepository : IEnrollmentRepository
         public int SchoolFeeConceptId { get; set; }
         public int SchoolYearId { get; set; }
         public string? PreviousSchool { get; set; }
+        public DateOnly EnrollmentDate { get; set; }
         public string StateName { get; set; } = null!;
     }
 }

@@ -492,6 +492,8 @@ prompt.txt
 
 # Local dev notes / scratch references (may contain real data)
 references/
+studentRegistrationCardFormat.md
+studentsBirthdaysReportFormat.md
 
 # Claude Code skills lockfile
 skills-lock.json
