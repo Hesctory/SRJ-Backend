@@ -27,7 +27,7 @@ with Argon2.
 
 ```bash
 # 1. Clone and restore dependencies
-git clone <repo-url>
+git clone https://github.com/Hesctory/SRJ-Backend.git
 cd SRJBackend
 dotnet restore
 
