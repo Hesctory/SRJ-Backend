@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using SRJBackend.Application.Interfaces;
+using SRJBackend.Infrastructure.Http;
 
 namespace SRJBackend.Infrastructure.Controllers;
 
@@ -18,8 +19,7 @@ public class DocumentTypesController : ControllerBase
     public async Task<IActionResult> GetAll()
     {
         var documentTypes = await _lookupQueries.GetDocumentTypesAsync();
-        var total = documentTypes.Count;
-        Response.Headers.Append("Content-Range", $"document-types 0-{(total == 0 ? 0 : total - 1)}/{total}");
+        Response.SetContentRange("document-types", documentTypes);
         return Ok(documentTypes);
     }
 }

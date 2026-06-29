@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SRJBackend.Application.Interfaces;
+using SRJBackend.Infrastructure.Http;
 
 namespace SRJBackend.Infrastructure.Controllers;
 
@@ -20,7 +21,7 @@ public class PaymentMethodsController : ControllerBase
     public async Task<IActionResult> GetAll()
     {
         var items = await _queries.GetAllAsync();
-        Response.Headers.Append("Content-Range", $"payment-methods 0-{items.Count - 1}/{items.Count}");
+        Response.SetContentRange("payment-methods", items);
         return Ok(items);
     }
 }

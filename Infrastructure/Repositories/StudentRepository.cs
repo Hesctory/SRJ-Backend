@@ -75,6 +75,17 @@ public class StudentRepository : IStudentRepository
         await _context.SaveChangesAsync();
     }
 
+    public async Task<bool> HomeExistsAsync(int studentId) =>
+        await _context.StudentHomes.AnyAsync(h => h.StudentId == studentId);
+
+    public async Task DeleteHomeAsync(int studentId)
+    {
+        var home = await _context.StudentHomes.FirstOrDefaultAsync(h => h.StudentId == studentId);
+        if (home == null) return;
+        _context.StudentHomes.Remove(home);
+        await _context.SaveChangesAsync();
+    }
+
     public async Task<bool> ExistsAsync(int id) =>
         await _context.Students.AnyAsync(s => s.PersonId == id);
 

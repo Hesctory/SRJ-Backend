@@ -10,6 +10,8 @@ public interface IStudentRepository
     Task CreateHomeAsync(DStudent student, int studentId);
     Task UpdateAsync(DStudent student);
     Task UpdateHomeAsync(DStudent student);
+    Task<bool> HomeExistsAsync(int studentId);
+    Task DeleteHomeAsync(int studentId);
     Task<bool> ExistsAsync(int id);
     Task<bool> TryDeleteAsync(int id);
     Task<bool> IsArchivedAsync(int id);

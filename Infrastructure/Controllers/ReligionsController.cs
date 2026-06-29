@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using SRJBackend.Application.Interfaces;
+using SRJBackend.Infrastructure.Http;
 
 namespace SRJBackend.Infrastructure.Controllers;
 
@@ -18,8 +19,7 @@ public class ReligionsController : ControllerBase
     public async Task<IActionResult> GetAll()
     {
         var religions = await _lookupQueries.GetReligionsAsync();
-        var total = religions.Count;
-        Response.Headers.Append("Content-Range", $"religions 0-{(total == 0 ? 0 : total - 1)}/{total}");
+        Response.SetContentRange("religions", religions);
         return Ok(religions);
     }
 }

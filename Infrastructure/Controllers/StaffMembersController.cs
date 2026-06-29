@@ -1,9 +1,9 @@
-using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SRJBackend.Application.DTOs;
 using SRJBackend.Application.Interfaces;
 using SRJBackend.Application.UseCases;
+using SRJBackend.Infrastructure.Http;
 
 namespace SRJBackend.Infrastructure.Controllers;
 
@@ -34,39 +34,11 @@ public class StaffMembersController : ControllerBase
         [FromQuery] string? range = null,
         [FromQuery] string? filter = null)
     {
-        StaffMemberFilter? staffMemberFilter = null;
-        if (filter != null)
-        {
-            var f = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(filter)!;
-            staffMemberFilter = new StaffMemberFilter(
-                FullName: f.TryGetValue("fullName", out var nameEl) ? nameEl.GetString() : null,
-                DocumentNumber: f.TryGetValue("documentNumber", out var docEl) ? docEl.GetString() : null,
-                EmployeeCode: f.TryGetValue("employeeCode", out var codeEl) ? codeEl.GetString() : null,
-                IsActive: f.TryGetValue("isActive", out var activeEl) && (activeEl.ValueKind == JsonValueKind.True || activeEl.ValueKind == JsonValueKind.False) ? activeEl.GetBoolean() : null,
-                IsArchived: f.TryGetValue("isArchived", out var archivedEl) && (archivedEl.ValueKind == JsonValueKind.True || archivedEl.ValueKind == JsonValueKind.False) ? archivedEl.GetBoolean() : null
-            );
-        }
-
-        if (range != null)
-        {
-            var bounds = JsonSerializer.Deserialize<int[]>(range)!;
-            if (bounds == null || bounds.Length != 2)
-                return BadRequest("Invalid range");
-            var start = bounds[0];
-            var end = bounds[1];
-            var take = end - start + 1;
-
-            var (items, total) = await _staffMemberQueries.GetPagedAsync(start, take, staffMemberFilter);
-            var rangeEnd = total == 0 ? 0 : start + items.Count - 1;
-            Response.Headers.Append("Content-Range", $"staff-members {start}-{rangeEnd}/{total}");
-            return Ok(items);
-        }
-        else
-        {
-            var (items, total) = await _staffMemberQueries.GetPagedAsync(0, int.MaxValue, staffMemberFilter);
-            Response.Headers.Append("Content-Range", $"staff-members 0-{total - 1}/{total}");
-            return Ok(items);
-        }
+        var staffMemberFilter = ListRequest.ParseFilter<StaffMemberFilter>(filter);
+        var (skip, take) = ListRequest.ParseRange(range);
+        var (items, total) = await _staffMemberQueries.GetPagedAsync(skip, take, staffMemberFilter);
+        Response.SetContentRange("staff-members", skip, items, total);
+        return Ok(items);
     }
 
     [HttpGet("{id:int}")]

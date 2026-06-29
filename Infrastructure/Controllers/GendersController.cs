@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using SRJBackend.Application.Interfaces;
+using SRJBackend.Infrastructure.Http;
 
 namespace SRJBackend.Infrastructure.Controllers;
 
@@ -18,8 +19,7 @@ public class GendersController : ControllerBase
     public async Task<IActionResult> GetAll()
     {
         var genders = await _lookupQueries.GetGendersAsync();
-        var total = genders.Count;
-        Response.Headers.Append("Content-Range", $"genders 0-{(total == 0 ? 0 : total - 1)}/{total}");
+        Response.SetContentRange("genders", genders);
         return Ok(genders);
     }
 }

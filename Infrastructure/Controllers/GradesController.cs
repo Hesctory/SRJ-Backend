@@ -1,9 +1,9 @@
-using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SRJBackend.Application.DTOs;
 using SRJBackend.Application.Interfaces;
 using SRJBackend.Application.UseCases;
+using SRJBackend.Infrastructure.Http;
 
 namespace SRJBackend.Infrastructure.Controllers;
 
@@ -32,25 +32,10 @@ public class GradesController : ControllerBase
     [Authorize(Policy = "grade.read")]
     public async Task<IActionResult> GetAll([FromQuery] string? range = null, [FromQuery] string? filter = null)
     {
-        Dictionary<string, JsonElement>? filters = null;
-        if (filter != null)
-        {
-            filters = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(filter);
-            if (filters == null) return BadRequest("Invalid filter");
-        }
-
-        int start = 0, take = int.MaxValue;
-        if (range != null)
-        {
-            var bounds = JsonSerializer.Deserialize<int[]>(range)!;
-            if (bounds == null || bounds.Length != 2) return BadRequest("Invalid range");
-            start = bounds[0];
-            take = bounds[1] - start + 1;
-        }
-
-        var (grades, total) = await _gradeQueries.GetPagedAsync(start, take, filters);
-        var rangeEnd = total == 0 ? 0 : start + grades.Count - 1;
-        Response.Headers.Append("Content-Range", $"grades {start}-{rangeEnd}/{total}");
+        var filters = ListRequest.ParseFilterDictionary(filter);
+        var (skip, take) = ListRequest.ParseRange(range);
+        var (grades, total) = await _gradeQueries.GetPagedAsync(skip, take, filters);
+        Response.SetContentRange("grades", skip, grades, total);
         return Ok(grades);
     }
 

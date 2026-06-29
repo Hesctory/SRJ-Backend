@@ -1,7 +1,7 @@
-using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SRJBackend.Application.Interfaces;
+using SRJBackend.Infrastructure.Http;
 
 namespace SRJBackend.Infrastructure.Controllers;
 
@@ -25,22 +25,13 @@ public class EnrollmentDebtsController : ControllerBase
         if (filter == null)
             return BadRequest("El parámetro 'filter' con 'enrollmentId' es requerido.");
 
-        var f = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(filter)!;
+        var f = ListRequest.ParseFilterDictionary(filter)!;
         if (!f.TryGetValue("enrollmentId", out var enrollmentIdEl) || !enrollmentIdEl.TryGetInt32(out var enrollmentId))
             return BadRequest("El filtro 'enrollmentId' es requerido.");
 
-        int start = 0, take = int.MaxValue;
-        if (range != null)
-        {
-            var bounds = JsonSerializer.Deserialize<int[]>(range)!;
-            if (bounds == null || bounds.Length != 2) return BadRequest("Rango inválido.");
-            start = bounds[0];
-            take = bounds[1] - start + 1;
-        }
-
-        var (items, total) = await _queries.GetByEnrollmentAsync(enrollmentId, start, take);
-        var rangeEnd = total == 0 ? 0 : start + items.Count - 1;
-        Response.Headers.Append("Content-Range", $"enrollment-debts {start}-{rangeEnd}/{total}");
+        var (skip, take) = ListRequest.ParseRange(range);
+        var (items, total) = await _queries.GetByEnrollmentAsync(enrollmentId, skip, take);
+        Response.SetContentRange("enrollment-debts", skip, items, total);
         return Ok(items);
     }
 

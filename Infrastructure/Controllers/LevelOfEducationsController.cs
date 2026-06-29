@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using SRJBackend.Application.Interfaces;
+using SRJBackend.Infrastructure.Http;
 
 namespace SRJBackend.Infrastructure.Controllers;
 
@@ -18,8 +19,7 @@ public class LevelOfEducationsController : ControllerBase
     public async Task<IActionResult> GetAll()
     {
         var levelOfEducations = await _lookupQueries.GetLevelOfEducationsAsync();
-        var total = levelOfEducations.Count;
-        Response.Headers.Append("Content-Range", $"level-of-educations 0-{(total == 0 ? 0 : total - 1)}/{total}");
+        Response.SetContentRange("level-of-educations", levelOfEducations);
         return Ok(levelOfEducations);
     }
 }

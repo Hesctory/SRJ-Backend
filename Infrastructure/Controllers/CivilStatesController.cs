@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using SRJBackend.Application.Interfaces;
+using SRJBackend.Infrastructure.Http;
 
 namespace SRJBackend.Infrastructure.Controllers;
 
@@ -18,8 +19,7 @@ public class CivilStatesController : ControllerBase
     public async Task<IActionResult> GetAll()
     {
         var civilStates = await _lookupQueries.GetCivilStatesAsync();
-        var total = civilStates.Count;
-        Response.Headers.Append("Content-Range", $"civil-states 0-{(total == 0 ? 0 : total - 1)}/{total}");
+        Response.SetContentRange("civil-states", civilStates);
         return Ok(civilStates);
     }
 }

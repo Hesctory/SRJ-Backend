@@ -1,5 +1,4 @@
 using Isopoh.Cryptography.Argon2;
-using SRJBackend.Application.DTOs;
 using SRJBackend.Application.Interfaces;
 using SRJBackend.Domain.Entities;
 
@@ -31,15 +30,6 @@ public class LoginUseCase
 
         var token = _jwtService.GenerateToken(user.Id, user.Email!, user.Roles);
 
-        var userDto = new UserDTO
-        {
-            Id = user.Id,
-            Name = user.FullName ?? string.Empty,
-            Email = user.Email!,
-            Phone = user.Phone ?? string.Empty,
-            Roles = user.Roles
-        };
-
-        return LoginResult.Ok(token, userDto);
+        return LoginResult.Ok(token, user);
     }
 }

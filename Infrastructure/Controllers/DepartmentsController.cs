@@ -1,6 +1,6 @@
-using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using SRJBackend.Application.Interfaces;
+using SRJBackend.Infrastructure.Http;
 
 namespace SRJBackend.Infrastructure.Controllers;
 
@@ -18,17 +18,11 @@ public class DepartmentsController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAll([FromQuery] string? filter = null)
     {
-        string? name = null;
-        if (!string.IsNullOrEmpty(filter))
-        {
-            var filterObj = JsonSerializer.Deserialize<JsonElement>(filter);
-            if (filterObj.TryGetProperty("name", out var nameProp))
-                name = nameProp.GetString();
-        }
+        var filters = ListRequest.ParseFilterDictionary(filter);
+        var name = filters is not null && filters.TryGetValue("name", out var nameProp) ? nameProp.GetString() : null;
 
         var departments = await _locationQueries.GetDepartmentsAsync(name);
-        var total = departments.Count;
-        Response.Headers.Append("Content-Range", $"departments 0-{(total == 0 ? 0 : total - 1)}/{total}");
+        Response.SetContentRange("departments", departments);
         return Ok(departments);
     }
 }

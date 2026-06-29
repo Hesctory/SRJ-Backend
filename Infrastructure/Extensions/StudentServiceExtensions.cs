@@ -11,7 +11,6 @@ public static class StudentServiceExtensions
     {
         services.AddScoped<IPersonRepository, PersonRepository>();
         services.AddScoped<IStudentRepository, StudentRepository>();
-        services.AddScoped<IStudentHomeRepository, StudentHomeRepository>();
         services.AddScoped<IFamiliarRepository, FamiliarRepository>();
         services.AddScoped<IFamiliarStudentRelationshipRepository, FamiliarStudentRelationshipRepository>();
         services.AddScoped<IStudentQueries, StudentQueries>();

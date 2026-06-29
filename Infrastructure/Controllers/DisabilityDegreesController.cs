@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using SRJBackend.Application.Interfaces;
+using SRJBackend.Infrastructure.Http;
 
 namespace SRJBackend.Infrastructure.Controllers;
 
@@ -18,8 +19,7 @@ public class DisabilityDegreesController : ControllerBase
     public async Task<IActionResult> GetAll()
     {
         var disabilityDegrees = await _lookupQueries.GetDisabilityDegreesAsync();
-        var total = disabilityDegrees.Count;
-        Response.Headers.Append("Content-Range", $"disability-degrees 0-{(total == 0 ? 0 : total - 1)}/{total}");
+        Response.SetContentRange("disability-degrees", disabilityDegrees);
         return Ok(disabilityDegrees);
     }
 }

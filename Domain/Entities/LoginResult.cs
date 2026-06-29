@@ -1,5 +1,3 @@
-using SRJBackend.Application.DTOs;
-
 namespace SRJBackend.Domain.Entities;
 
 public record LoginResult
@@ -7,9 +5,9 @@ public record LoginResult
     public bool Success { get; init; }
     public string? Token { get; init; }
     public string? ErrorMessage { get; init; }
-    public UserDTO? User { get; init; }
+    public DUser? User { get; init; }
 
-    public static LoginResult Ok(string token, UserDTO user) =>
+    public static LoginResult Ok(string token, DUser user) =>
         new() { Success = true, Token = token, User = user };
 
     public static LoginResult Fail(string message) =>

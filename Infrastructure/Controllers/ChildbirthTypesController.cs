@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using SRJBackend.Application.Interfaces;
+using SRJBackend.Infrastructure.Http;
 
 namespace SRJBackend.Infrastructure.Controllers;
 
@@ -18,8 +19,7 @@ public class ChildbirthTypesController : ControllerBase
     public async Task<IActionResult> GetAll()
     {
         var childbirthTypes = await _lookupQueries.GetChildbirthTypesAsync();
-        var total = childbirthTypes.Count;
-        Response.Headers.Append("Content-Range", $"childbirth-types 0-{(total == 0 ? 0 : total - 1)}/{total}");
+        Response.SetContentRange("childbirth-types", childbirthTypes);
         return Ok(childbirthTypes);
     }
 }

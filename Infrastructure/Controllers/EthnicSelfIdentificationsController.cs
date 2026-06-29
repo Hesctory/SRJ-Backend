@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using SRJBackend.Application.Interfaces;
+using SRJBackend.Infrastructure.Http;
 
 namespace SRJBackend.Infrastructure.Controllers;
 
@@ -18,8 +19,7 @@ public class EthnicSelfIdentificationsController : ControllerBase
     public async Task<IActionResult> GetAll()
     {
         var ethnicSelfIdentifications = await _lookupQueries.GetEthnicSelfIdentificationsAsync();
-        var total = ethnicSelfIdentifications.Count;
-        Response.Headers.Append("Content-Range", $"ethnic-self-identifications 0-{(total == 0 ? 0 : total - 1)}/{total}");
+        Response.SetContentRange("ethnic-self-identifications", ethnicSelfIdentifications);
         return Ok(ethnicSelfIdentifications);
     }
 }

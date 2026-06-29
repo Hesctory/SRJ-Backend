@@ -1,9 +1,9 @@
-using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SRJBackend.Application.DTOs;
 using SRJBackend.Application.Interfaces;
 using SRJBackend.Application.UseCases;
+using SRJBackend.Infrastructure.Http;
 
 namespace SRJBackend.Infrastructure.Controllers;
 
@@ -32,18 +32,9 @@ public class LunchesController : ControllerBase
     [Authorize(Policy = "lunch.read")]
     public async Task<IActionResult> GetAll([FromQuery] string? range = null)
     {
-        int start = 0, take = int.MaxValue;
-        if (range != null)
-        {
-            var bounds = JsonSerializer.Deserialize<int[]>(range)!;
-            if (bounds == null || bounds.Length != 2) return BadRequest("Invalid range");
-            start = bounds[0];
-            take = bounds[1] - start + 1;
-        }
-
-        var (items, total) = await _lunchQueries.GetPagedAsync(start, take);
-        var rangeEnd = total == 0 ? 0 : start + items.Count - 1;
-        Response.Headers.Append("Content-Range", $"lunches {start}-{rangeEnd}/{total}");
+        var (skip, take) = ListRequest.ParseRange(range);
+        var (items, total) = await _lunchQueries.GetPagedAsync(skip, take);
+        Response.SetContentRange("lunches", skip, items, total);
         return Ok(items);
     }
 

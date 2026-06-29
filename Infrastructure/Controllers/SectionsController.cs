@@ -1,7 +1,7 @@
-using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SRJBackend.Application.Interfaces;
+using SRJBackend.Infrastructure.Http;
 
 namespace SRJBackend.Infrastructure.Controllers;
 
@@ -20,25 +20,10 @@ public class SectionsController : ControllerBase
     [Authorize(Policy = "section.read")]
     public async Task<IActionResult> GetAll([FromQuery] string? range = null, [FromQuery] string? filter = null)
     {
-        Dictionary<string, JsonElement>? filters = null;
-        if (filter != null)
-        {
-            filters = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(filter);
-            if (filters == null) return BadRequest("Invalid filter");
-        }
-
-        int start = 0, take = int.MaxValue;
-        if (range != null)
-        {
-            var bounds = JsonSerializer.Deserialize<int[]>(range)!;
-            if (bounds == null || bounds.Length != 2) return BadRequest("Invalid range");
-            start = bounds[0];
-            take = bounds[1] - start + 1;
-        }
-
-        var (sections, total) = await _sectionQueries.GetPagedAsync(start, take, filters);
-        var rangeEnd = total == 0 ? 0 : start + sections.Count - 1;
-        Response.Headers.Append("Content-Range", $"sections {start}-{rangeEnd}/{total}");
+        var filters = ListRequest.ParseFilterDictionary(filter);
+        var (skip, take) = ListRequest.ParseRange(range);
+        var (sections, total) = await _sectionQueries.GetPagedAsync(skip, take, filters);
+        Response.SetContentRange("sections", skip, sections, total);
         return Ok(sections);
     }
 }

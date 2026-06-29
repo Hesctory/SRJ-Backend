@@ -5,20 +5,17 @@ namespace SRJBackend.Application.UseCases;
 public class DeleteStudentUseCase
 {
     private readonly IStudentRepository _studentRepository;
-    private readonly IStudentHomeRepository _studentHomeRepository;
     private readonly IFamiliarStudentRelationshipRepository _familiarStudentRelationshipRepository;
     private readonly IFamiliarRepository _familiarRepository;
     private readonly IPersonRepository _personRepository;
 
     public DeleteStudentUseCase(
         IStudentRepository studentRepository,
-        IStudentHomeRepository studentHomeRepository,
         IFamiliarStudentRelationshipRepository familiarStudentRelationshipRepository,
         IFamiliarRepository familiarRepository,
         IPersonRepository personRepository)
     {
         _studentRepository = studentRepository;
-        _studentHomeRepository = studentHomeRepository;
         _familiarStudentRelationshipRepository = familiarStudentRelationshipRepository;
         _familiarRepository = familiarRepository;
         _personRepository = personRepository;
@@ -42,8 +39,8 @@ public class DeleteStudentUseCase
             await _personRepository.TryDeleteAsync(familiarId);
         }
 
-        if (await _studentHomeRepository.ExistsAsync(id))
-            await _studentHomeRepository.DeleteAsync(id);
+        if (await _studentRepository.HomeExistsAsync(id))
+            await _studentRepository.DeleteHomeAsync(id);
 
         var studentDeleted = await _studentRepository.TryDeleteAsync(id);
         if (!studentDeleted)

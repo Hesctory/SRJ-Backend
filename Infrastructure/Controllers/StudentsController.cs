@@ -1,9 +1,9 @@
-using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SRJBackend.Application.DTOs;
 using SRJBackend.Application.Interfaces;
 using SRJBackend.Application.UseCases;
+using SRJBackend.Infrastructure.Http;
 
 namespace SRJBackend.Infrastructure.Controllers;
 
@@ -34,41 +34,11 @@ public class StudentsController : ControllerBase
         [FromQuery] string? range = null,
         [FromQuery] string? filter = null)
     {
-        StudentFilter? studentFilter = null;
-        if (filter != null)
-        {
-            var f = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(filter)!;
-            studentFilter = new StudentFilter(
-                SchoolYearId: f.TryGetValue("schoolYearId", out var syEl) && syEl.TryGetInt32(out var syId) ? syId : null,
-                FullName: f.TryGetValue("fullName", out var nameEl) ? nameEl.GetString() : null,
-                Dni: f.TryGetValue("dni", out var dniEl) ? dniEl.GetString() : null,
-                LevelId: f.TryGetValue("levelId", out var lvlEl) && lvlEl.TryGetInt32(out var lvlId) ? lvlId : null,
-                GradeId: f.TryGetValue("gradeId", out var gradeEl) && gradeEl.TryGetInt32(out var gradeId) ? gradeId : null,
-                ShiftId: f.TryGetValue("shiftId", out var shiftEl) && shiftEl.TryGetInt32(out var shiftId) ? shiftId : null,
-                SectionId: f.TryGetValue("sectionId", out var sectionEl) && sectionEl.TryGetInt32(out var sectionId) ? sectionId : null
-            );
-        }
-
-        if (range != null)
-        {
-            var bounds = JsonSerializer.Deserialize<int[]>(range)!;
-            if (bounds == null || bounds.Length != 2)
-                return BadRequest("Invalid range");
-            var start = bounds[0];
-            var end = bounds[1];
-            var take = end - start + 1;
-
-            var (students, total) = await _studentQueries.GetPagedAsync(start, take, studentFilter);
-            var rangeEnd = total == 0 ? 0 : start + students.Count - 1;
-            Response.Headers.Append("Content-Range", $"students {start}-{rangeEnd}/{total}");
-            return Ok(students);
-        }
-        else
-        {
-            var (students, total) = await _studentQueries.GetPagedAsync(0, int.MaxValue, studentFilter);
-            Response.Headers.Append("Content-Range", $"students 0-{total - 1}/{total}");
-            return Ok(students);
-        }
+        var studentFilter = ListRequest.ParseFilter<StudentFilter>(filter);
+        var (skip, take) = ListRequest.ParseRange(range);
+        var (students, total) = await _studentQueries.GetPagedAsync(skip, take, studentFilter);
+        Response.SetContentRange("students", skip, students, total);
+        return Ok(students);
     }
 
     [HttpGet("registration-card")]

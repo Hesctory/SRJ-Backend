@@ -1,7 +1,7 @@
-using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SRJBackend.Application.Interfaces;
+using SRJBackend.Infrastructure.Http;
 
 namespace SRJBackend.Infrastructure.Controllers;
 
@@ -25,22 +25,13 @@ public class DebtInstallmentsController : ControllerBase
         if (filter == null)
             return BadRequest("El parámetro 'filter' con 'debtId' es requerido.");
 
-        var f = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(filter)!;
+        var f = ListRequest.ParseFilterDictionary(filter)!;
         if (!f.TryGetValue("debtId", out var debtIdEl) || !debtIdEl.TryGetInt64(out var debtId))
             return BadRequest("El filtro 'debtId' es requerido.");
 
-        int start = 0, take = int.MaxValue;
-        if (range != null)
-        {
-            var bounds = JsonSerializer.Deserialize<int[]>(range)!;
-            if (bounds == null || bounds.Length != 2) return BadRequest("Rango inválido.");
-            start = bounds[0];
-            take = bounds[1] - start + 1;
-        }
-
-        var (items, total) = await _queries.GetByDebtAsync(debtId, start, take);
-        var rangeEnd = total == 0 ? 0 : start + items.Count - 1;
-        Response.Headers.Append("Content-Range", $"debt-installments {start}-{rangeEnd}/{total}");
+        var (skip, take) = ListRequest.ParseRange(range);
+        var (items, total) = await _queries.GetByDebtAsync(debtId, skip, take);
+        Response.SetContentRange("debt-installments", skip, items, total);
         return Ok(items);
     }
 

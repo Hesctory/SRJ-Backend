@@ -1,6 +1,6 @@
-using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using SRJBackend.Application.Interfaces;
+using SRJBackend.Infrastructure.Http;
 
 namespace SRJBackend.Infrastructure.Controllers;
 
@@ -18,17 +18,11 @@ public class DistrictsController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAll([FromQuery] string? filter = null)
     {
-        int? provinceId = null;
-        if (!string.IsNullOrEmpty(filter))
-        {
-            var filterObj = JsonSerializer.Deserialize<JsonElement>(filter);
-            if (filterObj.TryGetProperty("provinceId", out var prop) && prop.TryGetInt32(out var val))
-                provinceId = val;
-        }
+        var filters = ListRequest.ParseFilterDictionary(filter);
+        int? provinceId = filters is not null && filters.TryGetValue("provinceId", out var prop) && prop.TryGetInt32(out var val) ? val : null;
 
         var districts = await _locationQueries.GetDistrictsAsync(provinceId);
-        var total = districts.Count;
-        Response.Headers.Append("Content-Range", $"districts 0-{(total == 0 ? 0 : total - 1)}/{total}");
+        Response.SetContentRange("districts", districts);
         return Ok(districts);
     }
 }

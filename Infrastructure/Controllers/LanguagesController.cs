@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using SRJBackend.Application.Interfaces;
+using SRJBackend.Infrastructure.Http;
 
 namespace SRJBackend.Infrastructure.Controllers;
 
@@ -18,8 +19,7 @@ public class LanguagesController : ControllerBase
     public async Task<IActionResult> GetAll()
     {
         var languages = await _lookupQueries.GetLanguagesAsync();
-        var total = languages.Count;
-        Response.Headers.Append("Content-Range", $"languages 0-{(total == 0 ? 0 : total - 1)}/{total}");
+        Response.SetContentRange("languages", languages);
         return Ok(languages);
     }
 }

@@ -5,6 +5,7 @@ using SRJBackend.Application.DTOs;
 using SRJBackend.Application.Interfaces;
 using SRJBackend.Application.Mappers;
 using SRJBackend.Application.UseCases;
+using SRJBackend.Infrastructure.Http;
 
 namespace SRJBackend.Infrastructure.Controllers;
 
@@ -36,13 +37,8 @@ public class EnrollmentsController : ControllerBase
         [FromQuery] string? range = null,
         [FromQuery] string? sort = null)
     {
-        int? studentId = null;
-        if (filter != null)
-        {
-            var f = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(filter)!;
-            if (f.TryGetValue("studentId", out var sidEl) && sidEl.TryGetInt32(out var sid))
-                studentId = sid;
-        }
+        var f = ListRequest.ParseFilterDictionary(filter);
+        int? studentId = f is not null && f.TryGetValue("studentId", out var sidEl) && sidEl.TryGetInt32(out var sid) ? sid : null;
 
         if (studentId == null)
             return BadRequest("studentId filter is required");
@@ -66,22 +62,10 @@ public class EnrollmentsController : ControllerBase
             };
         }
 
-        var total = enrollments.Count;
-
-        if (range != null)
-        {
-            var bounds = JsonSerializer.Deserialize<int[]>(range)!;
-            var start = bounds[0];
-            var end = bounds[1];
-            var paged = enrollments.Skip(start).Take(end - start + 1).ToList();
-            var rangeEnd = total == 0 ? 0 : start + paged.Count - 1;
-            Response.Headers.Append("Content-Range", $"enrollments {start}-{rangeEnd}/{total}");
-            return Ok(paged);
-        }
-
-        var lastIndex = total == 0 ? 0 : total - 1;
-        Response.Headers.Append("Content-Range", $"enrollments 0-{lastIndex}/{total}");
-        return Ok(enrollments);
+        var (skip, take) = ListRequest.ParseRange(range);
+        var paged = enrollments.Skip(skip).Take(take).ToList();
+        Response.SetContentRange("enrollments", skip, paged, enrollments.Count);
+        return Ok(paged);
     }
 
     [HttpGet("{id:int}")]

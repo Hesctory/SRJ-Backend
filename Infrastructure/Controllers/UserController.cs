@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using SRJBackend.Application.Mappers;
 using SRJBackend.Application.UseCases;
 
 namespace SRJBackend.Infrastructure.Controllers;
@@ -23,7 +24,7 @@ public class UserController : ControllerBase
         {
             success = result.Success,
             token = result.Token,
-            user = result.User,
+            user = result.User is null ? null : UserMapper.ToDTO(result.User),
             error = result.ErrorMessage
         });
     }
