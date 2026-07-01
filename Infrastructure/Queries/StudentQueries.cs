@@ -99,7 +99,7 @@ public class StudentQueries : IStudentQueries
         if (sectionId.HasValue)
             query = query.Where(e => e.GradeOfferingShiftSectionId == sectionId.Value);
 
-        return await query
+        var items = await query
             .Select(e => new StudentReportItemDTO
             {
                 Id = e.Id,
@@ -115,6 +115,11 @@ public class StudentQueries : IStudentQueries
                 Section = e.GradeOfferingShiftSection.Section
             })
             .ToListAsync();
+
+        // Canonical ordering: fullName ascending (the frontend no longer sorts).
+        return items
+            .OrderBy(i => i.FullName, StringComparer.CurrentCultureIgnoreCase)
+            .ToList();
     }
 
     public async Task<List<StudentBirthdayDTO>> GetBirthdaysAsync(
@@ -149,7 +154,13 @@ public class StudentQueries : IStudentQueries
             })
             .ToListAsync();
 
+        // Sort by day-of-year (month, then day) ignoring birth year so it reads as a
+        // calendar; ties broken by fullName. This used to happen client-side.
         return rows
+            .OrderBy(r => r.BirthDate.Month)
+            .ThenBy(r => r.BirthDate.Day)
+            .ThenBy(r => $"{r.PaternalLastname} {r.MaternalLastname}, {r.Names}".Trim(),
+                    StringComparer.CurrentCultureIgnoreCase)
             .Select(r => new StudentBirthdayDTO
             {
                 Id = r.StudentId,
@@ -204,6 +215,7 @@ public class StudentQueries : IStudentQueries
             })
             .ToListAsync();
 
+        // Canonical ordering: fullName ascending (the frontend no longer sorts).
         return rows
             .Select(r => new WithdrawnStudentDTO
             {
@@ -219,6 +231,7 @@ public class StudentQueries : IStudentQueries
                     ? DateOnly.FromDateTime(r.WithdrawalDate.Value).ToString("yyyy-MM-dd")
                     : null
             })
+            .OrderBy(d => d.FullName, StringComparer.CurrentCultureIgnoreCase)
             .ToList();
     }
 
@@ -241,7 +254,7 @@ public class StudentQueries : IStudentQueries
         if (studentIds != null && studentIds.Count > 0)
             query = query.Where(e => studentIds.Contains(e.StudentId));
 
-        return await query.Select(e => new RegistrationCardDTO
+        var cards = await query.Select(e => new RegistrationCardDTO
         {
             id = e.StudentId,
             enrollmentCode = e.Code,
@@ -334,6 +347,53 @@ public class StudentQueries : IStudentQueries
                 .FirstOrDefault() ?? new RegistrationCardFeesDTO()
         })
         .ToListAsync();
+
+        // Order by fullName for a deterministic page sequence (contract unspecified).
+        return cards
+            .OrderBy(c => $"{c.paternalLastName} {c.maternalLastName} {c.firstName}".Trim(),
+                     StringComparer.CurrentCultureIgnoreCase)
+            .ToList();
+    }
+
+    public async Task<ReportContextDTO> GetReportContextAsync(
+        int? schoolYearId, int? levelId, int? gradeId, int? shiftId, int? sectionId)
+    {
+        var ctx = new ReportContextDTO();
+
+        if (schoolYearId.HasValue)
+            ctx.SchoolYear = (await _context.SchoolYears.AsNoTracking()
+                .Where(x => x.Id == schoolYearId.Value)
+                .Select(x => (short?)x.Year)
+                .FirstOrDefaultAsync())?.ToString();
+
+        if (levelId.HasValue)
+            ctx.Level = await _context.Levels.AsNoTracking()
+                .Where(x => x.Id == levelId.Value)
+                .Select(x => x.Name)
+                .FirstOrDefaultAsync();
+
+        if (gradeId.HasValue)
+            ctx.Grade = await _context.Grades.AsNoTracking()
+                .Where(x => x.Id == gradeId.Value)
+                .Select(x => x.Name)
+                .FirstOrDefaultAsync();
+
+        if (shiftId.HasValue)
+            ctx.Shift = await _context.Shifts.AsNoTracking()
+                .Where(x => x.Id == shiftId.Value)
+                .Select(x => x.Name)
+                .FirstOrDefaultAsync();
+
+        // sectionId is a GradeOfferingShiftSectionId; resolve it to the section letter/number.
+        if (sectionId.HasValue)
+            ctx.Section = await _context.GradeOfferingShiftSections.AsNoTracking()
+                .Where(x => x.Id == sectionId.Value)
+                .Select(x => x.Section != null
+                    ? x.Section.Value.ToString()
+                    : (x.SectionNumber != null ? x.SectionNumber.Value.ToString() : null))
+                .FirstOrDefaultAsync();
+
+        return ctx;
     }
 
     private static StudentDetailDTO MapToDTO(Student s)

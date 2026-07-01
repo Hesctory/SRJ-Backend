@@ -36,6 +36,7 @@ builder.Services.AddAccountingServices();
 builder.Services.AddStaffServices();
 builder.Services.AddLunchServices();
 builder.Services.AddBillingServices();
+builder.Services.AddReportServices();
 
 builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
 builder.Services.AddSingleton<IAuthorizationMiddlewareResultHandler, CustomAuthorizationMiddlewareResultHandler>();
@@ -68,7 +69,7 @@ builder.Services.AddCors(options =>
         policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod()
-              .WithExposedHeaders("Content-Range"));
+              .WithExposedHeaders("Content-Range", "Content-Disposition"));
 });
 
 var app = builder.Build();

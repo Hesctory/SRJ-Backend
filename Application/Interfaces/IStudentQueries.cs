@@ -12,4 +12,6 @@ public interface IStudentQueries
     Task<List<RegistrationCardDTO>> GetRegistrationCardAsync(
         int? schoolYearId, int? levelId, int? gradeId, int? shiftId, int? sectionId,
         List<int>? studentIds);
+    Task<ReportContextDTO> GetReportContextAsync(
+        int? schoolYearId, int? levelId, int? gradeId, int? shiftId, int? sectionId);
 }
