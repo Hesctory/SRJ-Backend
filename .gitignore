@@ -494,6 +494,9 @@ prompt.txt
 references/
 studentRegistrationCardFormat.md
 studentsBirthdaysReportFormat.md
+BackendGenerationOrientedMigration.md
+WithdrawnStudentsFormat.txt
+PDFsLayout/
 
 # Claude Code skills lockfile
 skills-lock.json

@@ -29,43 +29,43 @@ public class UpdateEnrollmentUseCase
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<EnrollmentDTO> ExecuteAsync(int id, UpdateEnrollmentDTO dto)
+    public async Task<EnrollmentDTO> ExecuteAsync(int id, UpdateEnrollmentDTO dto, int? changedBy = null)
     {
         var existing = await _enrollmentRepository.GetByIdAsync(id)
             ?? throw new KeyNotFoundException("Matrícula no encontrada.");
 
         if (dto.StateName != null)
-            return await HandleStateTransitionAsync(id, existing, dto.StateName);
+            return await HandleStateTransitionAsync(id, existing, dto.StateName, changedBy);
 
         return await HandlePlacementUpdateAsync(id, existing, dto);
     }
 
-    private async Task<EnrollmentDTO> HandleStateTransitionAsync(int id, DEnrollment existing, string stateName)
+    private async Task<EnrollmentDTO> HandleStateTransitionAsync(int id, DEnrollment existing, string stateName, int? changedBy)
     {
         await _unitOfWork.BeginAsync();
         try
         {
             if (stateName == EnrollmentStateNames.Cancelled && existing.Status != EnrollmentStatus.Cancelled)
             {
-                await _enrollmentRepository.CancelAsync(id);
+                await _enrollmentRepository.CancelAsync(id, changedBy);
                 var hasValid = await _enrollmentQueries.HasValidEnrollmentsAsync(existing.StudentId);
                 if (!hasValid)
                     await _studentRepository.ArchiveAsync(existing.StudentId);
             }
             else if (stateName == EnrollmentStateNames.Withdrawn && existing.Status == EnrollmentStatus.Active)
             {
-                await _enrollmentRepository.WithdrawAsync(id);
+                await _enrollmentRepository.WithdrawAsync(id, changedBy);
             }
             else if (stateName == EnrollmentStateNames.Active && existing.Status == EnrollmentStatus.Cancelled)
             {
-                await _enrollmentRepository.ReactivateAsync(id);
+                await _enrollmentRepository.ReactivateAsync(id, changedBy);
                 var isArchived = await _studentRepository.IsArchivedAsync(existing.StudentId);
                 if (isArchived)
                     await _studentRepository.UnarchiveAsync(existing.StudentId);
             }
             else if (stateName == EnrollmentStateNames.Active && existing.Status == EnrollmentStatus.Withdrawn)
             {
-                await _enrollmentRepository.ReactivateAsync(id);
+                await _enrollmentRepository.ReactivateAsync(id, changedBy);
             }
 
             await _unitOfWork.CommitAsync();

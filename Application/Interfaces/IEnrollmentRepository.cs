@@ -11,7 +11,7 @@ public interface IEnrollmentRepository
     Task<DEnrollment?> GetLatestByStudentIdAsync(int studentId);
     Task<DEnrollment?> GetByStudentIdAndYearAsync(int studentId, int schoolYearId);
     Task<DEnrollment> UpdateAsync(int id, AcademicPlacement placement, int schoolFeeConceptId, string? previousSchool);
-    Task<bool> CancelAsync(int id);
-    Task<bool> WithdrawAsync(int id);
-    Task<bool> ReactivateAsync(int id);
+    Task<bool> CancelAsync(int id, int? changedBy = null);
+    Task<bool> WithdrawAsync(int id, int? changedBy = null);
+    Task<bool> ReactivateAsync(int id, int? changedBy = null);
 }

@@ -8,6 +8,7 @@ public interface IStudentQueries
     Task<StudentDetailDTO?> GetByIdAsync(int id);
     Task<List<StudentReportItemDTO>> GetReportAsync(int? schoolYearId, int? levelId, int? gradeId, int? shiftId, int? sectionId);
     Task<List<StudentBirthdayDTO>> GetBirthdaysAsync(int? schoolYearId, int? levelId, int? gradeId, int? shiftId, int? sectionId);
+    Task<List<WithdrawnStudentDTO>> GetWithdrawnAsync(int? schoolYearId, int? levelId, int? gradeId, int? shiftId, int? sectionId);
     Task<List<RegistrationCardDTO>> GetRegistrationCardAsync(
         int? schoolYearId, int? levelId, int? gradeId, int? shiftId, int? sectionId,
         List<int>? studentIds);

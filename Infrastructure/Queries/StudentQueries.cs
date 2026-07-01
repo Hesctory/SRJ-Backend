@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using SRJBackend.Application.DTOs;
 using SRJBackend.Application.Interfaces;
+using SRJBackend.Domain.Constants;
 using SRJBackend.Infrastructure.Models;
 
 namespace SRJBackend.Infrastructure.Queries;
@@ -159,6 +160,64 @@ public class StudentQueries : IStudentQueries
                 Section = r.Section?.ToString(),
                 Shift = r.Shift,
                 BirthDate = r.BirthDate.ToString("yyyy-MM-dd")
+            })
+            .ToList();
+    }
+
+    public async Task<List<WithdrawnStudentDTO>> GetWithdrawnAsync(
+        int? schoolYearId, int? levelId, int? gradeId, int? shiftId, int? sectionId)
+    {
+        var query = _context.Enrollments
+            .AsNoTracking()
+            .Where(e => e.State.Name == EnrollmentStateNames.Withdrawn)
+            .AsQueryable();
+
+        if (schoolYearId.HasValue)
+            query = query.Where(e => e.SchoolYearId == schoolYearId.Value);
+        if (levelId.HasValue)
+            query = query.Where(e => e.GradeOfferingShiftSection.GradeOfferingShift.GradeOffering.Grade.LevelId == levelId.Value);
+        if (gradeId.HasValue)
+            query = query.Where(e => e.GradeOfferingShiftSection.GradeOfferingShift.GradeOffering.GradeId == gradeId.Value);
+        if (shiftId.HasValue)
+            query = query.Where(e => e.GradeOfferingShiftSection.GradeOfferingShift.ShiftId == shiftId.Value);
+        if (sectionId.HasValue)
+            query = query.Where(e => e.GradeOfferingShiftSectionId == sectionId.Value);
+
+        var rows = await query
+            .Select(e => new
+            {
+                e.Id,
+                e.Code,
+                e.Student!.Person.PaternalLastname,
+                e.Student!.Person.MaternalLastname,
+                e.Student!.Person.Names,
+                Level = e.GradeOfferingShiftSection.GradeOfferingShift.GradeOffering.Grade.Level.Name,
+                GradeYear = e.GradeOfferingShiftSection.GradeOfferingShift.GradeOffering.Grade.Year,
+                Shift = e.GradeOfferingShiftSection.GradeOfferingShift.Shift.Name,
+                Section = e.GradeOfferingShiftSection.Section,
+                e.EnrollmentDate,
+                // Latest transition INTO the current (Withdrawn) state, straight from the
+                // history table. Null only when no withdrawal was ever recorded for it.
+                WithdrawalDate = _context.EnrollmentStateHistories
+                    .Where(h => h.EnrollmentId == e.Id && h.ToStateId == e.StateId)
+                    .Max(h => (DateTime?)h.ChangedAt)
+            })
+            .ToListAsync();
+
+        return rows
+            .Select(r => new WithdrawnStudentDTO
+            {
+                Id = r.Id,
+                EnrollmentCode = r.Code,
+                FullName = $"{r.PaternalLastname} {r.MaternalLastname}, {r.Names}".Trim(),
+                Level = r.Level,
+                GradeYear = r.GradeYear.ToString(),
+                Section = r.Section?.ToString(),
+                Shift = r.Shift,
+                EnrollmentDate = r.EnrollmentDate.ToString("yyyy-MM-dd"),
+                WithdrawalDate = r.WithdrawalDate.HasValue
+                    ? DateOnly.FromDateTime(r.WithdrawalDate.Value).ToString("yyyy-MM-dd")
+                    : null
             })
             .ToList();
     }

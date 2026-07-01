@@ -946,6 +946,67 @@ ALTER SEQUENCE public.enrollment_states_id_seq OWNED BY public.enrollment_states
 
 
 --
+-- Name: enrollment_state_history; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.enrollment_state_history (
+    id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+    enrollment_id integer NOT NULL,
+    from_state_id integer,
+    to_state_id integer NOT NULL,
+    changed_at timestamp with time zone DEFAULT now() NOT NULL,
+    changed_by integer
+);
+
+
+--
+-- Name: enrollment_state_history enrollment_state_history_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.enrollment_state_history
+    ADD CONSTRAINT enrollment_state_history_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: ix_enrollment_state_history_enrollment; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_enrollment_state_history_enrollment ON public.enrollment_state_history USING btree (enrollment_id);
+
+
+--
+-- Name: enrollment_state_history enrollment_state_history_enrollment_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.enrollment_state_history
+    ADD CONSTRAINT enrollment_state_history_enrollment_id_fkey FOREIGN KEY (enrollment_id) REFERENCES public.enrollment(id);
+
+
+--
+-- Name: enrollment_state_history enrollment_state_history_from_state_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.enrollment_state_history
+    ADD CONSTRAINT enrollment_state_history_from_state_id_fkey FOREIGN KEY (from_state_id) REFERENCES public.enrollment_states(id);
+
+
+--
+-- Name: enrollment_state_history enrollment_state_history_to_state_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.enrollment_state_history
+    ADD CONSTRAINT enrollment_state_history_to_state_id_fkey FOREIGN KEY (to_state_id) REFERENCES public.enrollment_states(id);
+
+
+--
+-- Name: enrollment_state_history enrollment_state_history_changed_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.enrollment_state_history
+    ADD CONSTRAINT enrollment_state_history_changed_by_fkey FOREIGN KEY (changed_by) REFERENCES public.users(id);
+
+
+--
 -- Name: ethnic_self_identifications; Type: TABLE; Schema: public; Owner: -
 --
 

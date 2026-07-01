@@ -114,40 +114,59 @@ public class EnrollmentRepository : IEnrollmentRepository
         return domain;
     }
 
-    public async Task<bool> CancelAsync(int id)
+    public async Task<bool> CancelAsync(int id, int? changedBy = null)
     {
         var loaded = await LoadForStateTransitionAsync(id);
         if (loaded == null) return false;
         var (ef, domain, schoolYear) = loaded.Value;
 
         domain.Cancel(schoolYear);
+        var fromStateId = ef.StateId;
         ef.StateId = await GetStateIdAsync(EnrollmentStateNames.Cancelled);
+        AddStateHistory(ef.Id, fromStateId, ef.StateId, changedBy);
         await _context.SaveChangesAsync();
         return true;
     }
 
-    public async Task<bool> WithdrawAsync(int id)
+    public async Task<bool> WithdrawAsync(int id, int? changedBy = null)
     {
         var loaded = await LoadForStateTransitionAsync(id);
         if (loaded == null) return false;
         var (ef, domain, schoolYear) = loaded.Value;
 
         domain.Withdraw(schoolYear);
+        var fromStateId = ef.StateId;
         ef.StateId = await GetStateIdAsync(EnrollmentStateNames.Withdrawn);
+        AddStateHistory(ef.Id, fromStateId, ef.StateId, changedBy);
         await _context.SaveChangesAsync();
         return true;
     }
 
-    public async Task<bool> ReactivateAsync(int id)
+    public async Task<bool> ReactivateAsync(int id, int? changedBy = null)
     {
         var loaded = await LoadForStateTransitionAsync(id);
         if (loaded == null) return false;
         var (ef, domain, schoolYear) = loaded.Value;
 
         domain.Reactivate(schoolYear);
+        var fromStateId = ef.StateId;
         ef.StateId = await GetStateIdAsync(EnrollmentStateNames.Active);
+        AddStateHistory(ef.Id, fromStateId, ef.StateId, changedBy);
         await _context.SaveChangesAsync();
         return true;
+    }
+
+    // Records a transition in enrollment_state_history. changed_at is filled by the
+    // DB default (now()). A null fromStateId marks the initial state set on creation.
+    private void AddStateHistory(int enrollmentId, int? fromStateId, int toStateId, int? changedBy)
+    {
+        _context.EnrollmentStateHistories.Add(new EnrollmentStateHistory
+        {
+            EnrollmentId = enrollmentId,
+            FromStateId = fromStateId,
+            ToStateId = toStateId,
+            ChangedBy = changedBy
+        });
     }
 
     private async Task<(Enrollment EfModel, DEnrollment Domain, DSchoolYear SchoolYear)?> LoadForStateTransitionAsync(int id)

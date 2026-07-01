@@ -23,6 +23,8 @@ public partial class User
 
     public virtual ICollection<EnrollmentDebt> EnrollmentDebts { get; set; } = new List<EnrollmentDebt>();
 
+    public virtual ICollection<EnrollmentStateHistory> EnrollmentStateHistories { get; set; } = new List<EnrollmentStateHistory>();
+
     public virtual ICollection<LunchAssignment> LunchAssignments { get; set; } = new List<LunchAssignment>();
 
     public virtual ICollection<Payment> PaymentCreatedByNavigations { get; set; } = new List<Payment>();

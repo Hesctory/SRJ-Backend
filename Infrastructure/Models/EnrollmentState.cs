@@ -9,5 +9,9 @@ public partial class EnrollmentState
 
     public string? Name { get; set; }
 
+    public virtual ICollection<EnrollmentStateHistory> EnrollmentStateHistoryFromStates { get; set; } = new List<EnrollmentStateHistory>();
+
+    public virtual ICollection<EnrollmentStateHistory> EnrollmentStateHistoryToStates { get; set; } = new List<EnrollmentStateHistory>();
+
     public virtual ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
 }

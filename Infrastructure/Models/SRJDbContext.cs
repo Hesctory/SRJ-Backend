@@ -47,6 +47,8 @@ public partial class SRJDbContext : DbContext
 
     public virtual DbSet<EnrollmentState> EnrollmentStates { get; set; }
 
+    public virtual DbSet<EnrollmentStateHistory> EnrollmentStateHistories { get; set; }
+
     public virtual DbSet<EthnicSelfIdentification> EthnicSelfIdentifications { get; set; }
 
     public virtual DbSet<Familiar> Familiars { get; set; }
@@ -553,6 +555,44 @@ public partial class SRJDbContext : DbContext
             entity.Property(e => e.Name)
                 .HasMaxLength(20)
                 .HasColumnName("name");
+        });
+
+        modelBuilder.Entity<EnrollmentStateHistory>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("enrollment_state_history_pkey");
+
+            entity.ToTable("enrollment_state_history");
+
+            entity.HasIndex(e => e.EnrollmentId, "ix_enrollment_state_history_enrollment");
+
+            entity.Property(e => e.Id)
+                .UseIdentityAlwaysColumn()
+                .HasColumnName("id");
+            entity.Property(e => e.ChangedAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("changed_at");
+            entity.Property(e => e.ChangedBy).HasColumnName("changed_by");
+            entity.Property(e => e.EnrollmentId).HasColumnName("enrollment_id");
+            entity.Property(e => e.FromStateId).HasColumnName("from_state_id");
+            entity.Property(e => e.ToStateId).HasColumnName("to_state_id");
+
+            entity.HasOne(d => d.ChangedByNavigation).WithMany(p => p.EnrollmentStateHistories)
+                .HasForeignKey(d => d.ChangedBy)
+                .HasConstraintName("enrollment_state_history_changed_by_fkey");
+
+            entity.HasOne(d => d.Enrollment).WithMany(p => p.EnrollmentStateHistories)
+                .HasForeignKey(d => d.EnrollmentId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("enrollment_state_history_enrollment_id_fkey");
+
+            entity.HasOne(d => d.FromState).WithMany(p => p.EnrollmentStateHistoryFromStates)
+                .HasForeignKey(d => d.FromStateId)
+                .HasConstraintName("enrollment_state_history_from_state_id_fkey");
+
+            entity.HasOne(d => d.ToState).WithMany(p => p.EnrollmentStateHistoryToStates)
+                .HasForeignKey(d => d.ToStateId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("enrollment_state_history_to_state_id_fkey");
         });
 
         modelBuilder.Entity<EthnicSelfIdentification>(entity =>

@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -90,7 +91,10 @@ public class EnrollmentsController : ControllerBase
     [Authorize(Policy = "enrollment.update")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateEnrollmentDTO dto)
     {
-        var enrollment = await _updateEnrollmentUseCase.ExecuteAsync(id, dto);
+        int? changedBy = int.TryParse(
+            User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId) ? userId : null;
+
+        var enrollment = await _updateEnrollmentUseCase.ExecuteAsync(id, dto, changedBy);
         return Ok(enrollment);
     }
 

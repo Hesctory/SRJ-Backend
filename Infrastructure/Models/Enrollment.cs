@@ -29,6 +29,8 @@ public partial class Enrollment
 
     public virtual EnrollmentDebt? EnrollmentDebt { get; set; }
 
+    public virtual ICollection<EnrollmentStateHistory> EnrollmentStateHistories { get; set; } = new List<EnrollmentStateHistory>();
+
     public virtual GradeOfferingShiftSection GradeOfferingShiftSection { get; set; } = null!;
 
     public virtual ICollection<LunchAssignment> LunchAssignments { get; set; } = new List<LunchAssignment>();
